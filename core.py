@@ -27,7 +27,7 @@ def _atomic_text(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\\n") as handle:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(text)
             handle.flush()
             os.fsync(handle.fileno())
@@ -130,13 +130,13 @@ def list_models(p, strict=False):
 # ---- global memory.md (read on every call, so it is always in sync) ------
 def get_mem():
     if not MEM.exists():
-        MEM.write_text("# Shared memory\n\n", "utf-8")
+        _atomic_text(MEM, "# Shared memory\n\n")
     return MEM.read_text("utf-8")
 
 
 def set_mem(t):
     if len(t) > 100000: raise ValueError("Memory is limited to 100 KB.")
-    _save(MEM, t)
+    _atomic_text(MEM, t)
 
 
 def add_mem(lines):
