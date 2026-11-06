@@ -46,7 +46,12 @@ jobs:
         run: choco install innosetup --no-progress -y
       - name: Create setup executable
         shell: pwsh
-        run: '& "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe" installer.iss'
+        run: |
+          $pf86 = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
+          $compiler = Join-Path $pf86 'Inno Setup 6\ISCC.exe'
+          if (!(Test-Path $compiler)) { $compiler = Join-Path $env:ProgramFiles 'Inno Setup 6\ISCC.exe' }
+          if (!(Test-Path $compiler)) { throw "Inno Setup compiler ISCC.exe was not found" }
+          & $compiler installer.iss
       - name: Clean install and launch smoke test
         shell: pwsh
         run: |
