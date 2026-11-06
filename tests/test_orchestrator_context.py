@@ -41,4 +41,4 @@ def test_inspect_project_bounds_context_size(tmp_path):
         (tmp_path / f"file_{index:03}.py").write_text("x" * 1000, encoding="utf-8")
     context = inspect_project(tmp_path)
     assert len(context) < 25000
-    assert context.count(" - ") < 130
+    assert context.count("\\n- ") <= 120
