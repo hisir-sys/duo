@@ -73,3 +73,33 @@ def test_plaintext_legacy_key_is_not_used(tmp_path, monkeypatch):
             return Backend()
     monkeypatch.setitem(__import__("sys").modules, "keyring", DisabledKeyring)
     assert core.get_key("claude") is None
+
+
+
+def test_create_master_plan_uses_configured_master_provider(monkeypatch):
+    payload = [{
+        "id": "inspect",
+        "title": "Inspect project",
+        "role": "research",
+        "provider": "gemini",
+        "instructions": "Inspect only the supplied project context.",
+        "depends_on": [],
+        "acceptance_criteria": ["A concise project summary is returned."],
+        "files": [],
+    }]
+    monkeypatch.setattr(core, "get_cfg", lambda: {
+        "master_provider": "gemini", "lead": "claude", "coding": True,
+        "gemini_model": "gemini-test",
+    })
+    monkeypatch.setattr(core, "get_key", lambda provider: "test-key" if provider == "gemini" else None)
+    monkeypatch.setattr(core, "ask", lambda *args: json.dumps(payload))
+    result = core.create_master_plan("Inspect my project", "Python application")
+    assert result.provider == "gemini"
+    assert result.tasks[0].role == "research"
+
+
+def test_create_master_plan_requires_a_configured_provider(monkeypatch):
+    monkeypatch.setattr(core, "get_cfg", lambda: {"master_provider": "gemini", "lead": "claude"})
+    monkeypatch.setattr(core, "get_key", lambda provider: None)
+    with pytest.raises(RuntimeError, match="Connect at least one"):
+        core.create_master_plan("Inspect my project")
