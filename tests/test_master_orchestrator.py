@@ -84,3 +84,11 @@ def test_master_orchestrator_rejects_invalid_json():
 def test_master_requires_at_least_one_provider():
     with pytest.raises(ValueError):
         MasterOrchestrator(lambda *args: "[]", provider_names=[])
+
+
+
+def test_master_orchestrator_accepts_fenced_json():
+    response = "Here is the plan:\n```json\n" + json.dumps([task("inspect")]) + "\n```"
+    master = MasterOrchestrator(lambda *args: response, provider_names=["gemini"])
+    plan = master.create_plan("Inspect the project", provider="gemini", cfg={})
+    assert plan.tasks[0].id == "inspect"
