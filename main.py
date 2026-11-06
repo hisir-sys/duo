@@ -70,6 +70,9 @@ class Win(QMainWindow):
                 hl.addWidget(w)
             hl.addSpacing(14)
         s.sync_login()
+        provider_btn = QPushButton("Providers")
+        provider_btn.clicked.connect(s.open_providers)
+        hl.addWidget(provider_btn)
 
         # sidebar
         s.plist = QListWidget()
@@ -165,6 +168,107 @@ class Win(QMainWindow):
             st.setText(f"● {LABEL[p]}")
             st.setStyleSheet(f"font-weight:600;color:{'#16a34a' if on else '#9aa3b5'};")
             bt.setText("Sign out" if on else "Sign in")
+
+    def open_providers(s):
+        dlg = QDialog(s)
+        dlg.setWindowTitle("DuoAI Studio · AI providers")
+        dlg.setMinimumWidth(480)
+        layout = QVBoxLayout(dlg)
+        form = QFormLayout()
+        provider = QComboBox()
+        labels = {
+            "gemini": "Google Gemini",
+            "claude": "Anthropic Claude",
+            "chatgpt": "OpenAI",
+            "mistral": "Mistral",
+            "groq": "Groq",
+            "openrouter": "OpenRouter",
+            "cerebras": "Cerebras",
+        }
+        for key, label in labels.items():
+            provider.addItem(label, key)
+        model = QComboBox()
+        model.setEditable(True)
+        api_key = QLineEdit()
+        api_key.setEchoMode(QLineEdit.Password)
+        api_key.setPlaceholderText("Paste a key to save or replace it")
+        status = QLabel()
+        status.setObjectName("muted")
+        form.addRow("Provider", provider)
+        form.addRow("Model", model)
+        form.addRow("API key", api_key)
+        form.addRow("Status", status)
+        layout.addLayout(form)
+        buttons = QHBoxLayout()
+        save = QPushButton("Save key / model")
+        test = QPushButton("Test connection")
+        remove = QPushButton("Remove key")
+        buttons.addWidget(save)
+        buttons.addWidget(test)
+        buttons.addWidget(remove)
+        layout.addLayout(buttons)
+
+        def selected():
+            p = provider.currentData()
+            cfg = core.get_cfg()
+            model.clear()
+            model.addItems(core.MODELS[p])
+            model.setCurrentText(cfg.get(core.MK[p], core.MODELS[p][0]))
+            api_key.clear()
+            status.setText("Key saved securely" if core.get_key(p) else "Not connected")
+        provider.currentIndexChanged.connect(selected)
+
+        def save_settings():
+            p = provider.currentData()
+            try:
+                value = api_key.text().strip()
+                if value:
+                    core.set_key(p, value)
+                    api_key.clear()
+                cfg = core.get_cfg()
+                cfg[core.MK[p]] = model.currentText().strip() or core.MODELS[p][0]
+                core.set_cfg(cfg)
+                status.setText("Saved securely" if core.get_key(p) else "Model saved; no API key configured")
+                s.sync_login()
+            except Exception as e:
+                QMessageBox.warning(dlg, "Provider settings", str(e))
+
+        def remove_key():
+            p = provider.currentData()
+            core.del_key(p)
+            api_key.clear()
+            status.setText("API key removed")
+            s.sync_login()
+
+        def test_connection():
+            p = provider.currentData()
+            test.setEnabled(False)
+            status.setText("Testing official provider API...")
+            worker = Worker(lambda cb, ch: core.test_provider_connection(p))
+            dlg._provider_worker = worker
+            def passed(models):
+                test.setEnabled(True)
+                if models:
+                    current = model.currentText()
+                    model.clear()
+                    model.addItems(models)
+                    model.setCurrentText(current if current in models else models[0])
+                    status.setText(f"Connected · {len(models)} models available")
+                else:
+                    status.setText("Connected, but the provider returned no model list")
+            def failed(message):
+                test.setEnabled(True)
+                status.setText("Connection failed")
+                QMessageBox.warning(dlg, "Provider connection failed", message)
+            worker.ok.connect(passed)
+            worker.err.connect(failed)
+            worker.start()
+
+        save.clicked.connect(save_settings)
+        remove.clicked.connect(remove_key)
+        test.clicked.connect(test_connection)
+        selected()
+        dlg.exec()
 
     def toggle_login(s, p):
         st, mc, bt = s.pv[p]
