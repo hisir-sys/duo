@@ -6,7 +6,7 @@ A Windows desktop workspace where Claude and ChatGPT collaborate on projects, pl
 
 - Python 3.11
 - Windows 10/11 (64-bit)
-- Install dependencies: `python -m pip install -r requirements.txt`
+- Install the direct dependency set: `python -m pip install -r requirements.txt` (for the exact Windows x64 / Python 3.11 build environment, use `python -m pip install -r requirements-lock.txt`).
 - Start: `python main.py`
 
 Sign in with each provider's API key. Keys are stored in the operating system credential vault through Python Keyring; DuoAI does not fall back to plaintext key files. You can also use `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` environment variables.
@@ -31,7 +31,7 @@ Projects, configuration and shared memory are stored locally under `~/.duoai`. P
 
 ## Build the Windows installer
 
-The repository's GitHub Actions workflow builds a PyInstaller application bundle and packages it into a per-user `DuoAI-Setup-1.0.0.exe` using Inno Setup. Push a version tag such as `v1.0.0` to attach the installer to a GitHub Release. The workflow also publishes the installer as a downloadable build artifact.
+The repository's GitHub Actions workflow installs the fully pinned `requirements-lock.txt`, runs the tests, builds a PyInstaller application bundle and packages it into a per-user `DuoAI-Setup-1.0.0.exe` using Inno Setup. Push a version tag such as `v1.0.0` to attach the installer to a GitHub Release. The workflow also publishes the installer as a downloadable build artifact.
 
 For a local build on Windows, install the pinned requirements and Inno Setup, then run:
 
