@@ -1,0 +1,99 @@
+/* Duo Orb + Home finish: original artwork, restrained motion, and flexible desktop layout. */
+.orb {
+  isolation: isolate;
+  overflow: visible;
+  background: radial-gradient(circle at 31% 24%, #fff 0 2%, #e3ebf5 12%, #a7bad2 34%, #6e86a7 58%, #425b7c 78%, #dce5ef 100%);
+  box-shadow: inset -10px -12px 22px #263d5a55, inset 7px 8px 17px #ffffffc9, 0 10px 24px #344b6b25;
+}
+.orb::before {
+  content: "";
+  position: absolute;
+  inset: 7%;
+  border-radius: 50%;
+  border: 1px solid #ffffff70;
+  box-shadow: inset 0 0 14px #ffffff35;
+}
+.orb-aura {
+  position: absolute;
+  inset: 13%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 34% 27%, #ffffffd9 0 8%, transparent 36%), radial-gradient(ellipse at 69% 72%, #3e5b7e9c, transparent 55%);
+  filter: blur(5px);
+  animation: orb-aura 9s ease-in-out infinite alternate;
+}
+.orb-shell {
+  position: absolute;
+  inset: 19%;
+  border-radius: 44% 56% 54% 46%;
+  transform: rotate(-28deg);
+  background: linear-gradient(145deg, #ffffffc9 0%, #dbe5f2a6 32%, #7891b2a6 63%, #38527180 100%);
+  box-shadow: inset 2px 3px 8px #ffffffa8, 5px 7px 14px #29415f35;
+  filter: blur(1.2px);
+  animation: orb-shell 7s ease-in-out infinite alternate;
+}
+.orb-flow {
+  position: absolute;
+  width: 46%;
+  height: 24%;
+  border-radius: 50%;
+  filter: blur(5px);
+  background: linear-gradient(90deg, #ffffffa8, #9bb0cba8 55%, #526d91a8);
+}
+.orb-flow-one { top: 37%; left: 24%; transform: rotate(-34deg); animation: orb-flow-one 8s ease-in-out infinite alternate; }
+.orb-flow-two { top: 47%; left: 31%; opacity: .62; transform: rotate(31deg); animation: orb-flow-two 10s ease-in-out infinite alternate; }
+.orb-highlight {
+  position: absolute;
+  width: 31%;
+  height: 13%;
+  top: 20%;
+  left: 23%;
+  border-radius: 50%;
+  transform: rotate(-29deg);
+  background: #ffffffc9;
+  filter: blur(4px);
+}
+.orb-ring {
+  position: absolute;
+  inset: 5%;
+  border: 1px solid #ffffff35;
+  border-radius: 50%;
+  transform: rotate(-24deg) scaleY(.76);
+  box-shadow: 0 0 12px #ffffff25;
+}
+.orb.compact { overflow: hidden; background: radial-gradient(circle at 30% 24%, #fff 0 3%, #dce6f2 20%, #8299b8 57%, #425b7c 100%); }
+.orb.compact .orb-aura,.orb.compact .orb-shell,.orb.compact .orb-flow,.orb.compact .orb-highlight,.orb.compact .orb-ring { filter: blur(1px); }
+.orb.static *, .low .orb * { animation: none !important; }
+@keyframes orb-aura { from { transform: rotate(-12deg) scale(.94); opacity:.76; } to { transform: rotate(12deg) scale(1.06); opacity:1; } }
+@keyframes orb-shell { from { transform: translate(-2px,2px) rotate(-35deg) scale(.96); } to { transform: translate(3px,-2px) rotate(-18deg) scale(1.04); } }
+@keyframes orb-flow-one { from { transform: translate(-3px,2px) rotate(-38deg); } to { transform: translate(4px,-3px) rotate(-24deg); } }
+@keyframes orb-flow-two { from { transform: translate(3px,-2px) rotate(24deg) scale(.9); } to { transform: translate(-3px,2px) rotate(38deg) scale(1.08); } }
+
+.brand img { width: 36px; height: 36px; filter: drop-shadow(0 3px 7px #344b6b22); }
+.brand b { letter-spacing: -.65px; }
+.welcome h1 { letter-spacing: -1.15px; }
+.metric, .panel, .focus, .review { will-change: transform; }
+.metric:focus-within, .panel:focus-within, .focus:focus-within, .review:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.search:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 14%, transparent); }
+.topbar .orb.compact { width: 32px; height: 32px; }
+@media (max-width: 1080px) {
+  html, body, #root { min-width: 760px; }
+  .sidebar { width: 210px; }
+  .content { padding: 26px 20px 20px; }
+  .topbar { padding: 0 20px; }
+  .middle { grid-template-columns: minmax(0, 1.2fr) minmax(245px, .85fr); }
+  .metrics { gap: 9px; }
+  .metric { padding: 13px; }
+  .search { width: 180px; }
+}
+@media (max-width: 860px) {
+  html, body, #root { min-width: 700px; }
+  .sidebar { width: 190px; padding-left: 12px; padding-right: 12px; }
+  .middle { grid-template-columns: 1fr; }
+  .right-col { grid-template-columns: 1fr 1fr; grid-template-rows: minmax(170px, auto); }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bridge { display: none; }
+  .top-actions { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb-aura, .orb-shell, .orb-flow { animation: none !important; }
+}
