@@ -141,9 +141,9 @@ def client(p):
         raise RuntimeError(f"Sign in to {p.title()} first, or set the matching API-key environment variable.")
     if p == "claude":
         import anthropic
-        return anthropic.Anthropic(api_key=key)
+        return anthropic.Anthropic(api_key=key, timeout=120, max_retries=2)
     from openai import OpenAI
-    return OpenAI(api_key=key)
+    return OpenAI(api_key=key, timeout=120, max_retries=2)
 
 
 def list_models(p, strict=False):
@@ -279,16 +279,24 @@ def ask(p, system, prompt, atts, cfg, thinking=False, on_chunk=None):
         content.append({"type": "text", "text": prompt})
         kw = dict(model=cfg[MK[p]], max_tokens=8000, system=system, messages=[{"role": "user", "content": content}])
 
-        def go(kw):
+        emitted = False
+        def go(options):
+            nonlocal emitted
             out = []
-            with client(p).messages.stream(**kw) as st:
+            with client(p).messages.stream(**options) as st:
                 for t in st.text_stream:
+                    emitted = True
                     out.append(t)
                     emit(t)
             return "".join(out)
         if thinking:
-            # Do not retry after a stream may have emitted partial output.
-            return go({**kw, "max_tokens": 12000, "thinking": {"type": "enabled", "budget_tokens": 4000}})
+            try:
+                return go({**kw, "max_tokens": 12000, "thinking": {"type": "enabled", "budget_tokens": 4000}})
+            except Exception:
+                # Retry without extended thinking only when no partial text was emitted.
+                if emitted:
+                    raise
+                return go(kw)
         return go(kw)
     content = [{"type": "text", "text": prompt}] + [
         {"type": "image_url", "image_url": {"url": f"data:{a['mime']};base64,{a['b64']}"}} for a in imgs]
