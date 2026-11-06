@@ -161,10 +161,13 @@ def test_provider_connection(p):
     return list_models(p, strict=True)
 
 
-def create_master_plan(goal, project_context="", provider=None):
+def create_master_plan(goal, project_context="", provider=None, project_root=None):
     """Create a validated Master plan using configured providers only."""
+    from orchestrator.context import inspect_project
     from orchestrator.master import MasterOrchestrator
 
+    if project_root is not None:
+        project_context = inspect_project(project_root)
     cfg = get_cfg()
     configured = [name for name in KN if get_key(name)]
     if not configured:
