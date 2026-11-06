@@ -166,6 +166,19 @@ def list_projects():
     return sorted([p for p in ps if p], key=lambda p: p["name"].lower())
 
 
+def safe_export_path(project_id, relative):
+    if not re.fullmatch(r"[a-f0-9]{8}", str(project_id)):
+        raise ValueError("Invalid project identifier")
+    rel = Path(relative)
+    if rel.is_absolute() or not rel.parts or ".." in rel.parts:
+        raise ValueError("Unsafe export path")
+    root = (WORK / project_id).resolve()
+    target = (root / rel).resolve()
+    if target != root and root not in target.parents:
+        raise ValueError("Export path escapes the workspace")
+    return target
+
+
 def export_code(p):
     out = []
     root = (WORK / p["id"]).resolve()
