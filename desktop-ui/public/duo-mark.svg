@@ -1,1 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="#5B7499"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">DuoAI Studio</title>
+  <defs>
+    <linearGradient id="base" x1="8" y1="6" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8298B7"/>
+      <stop offset="1" stop-color="#405979"/>
+    </linearGradient>
+    <radialGradient id="light" cx="0" cy="0" r="1" gradientTransform="matrix(35 38 -36 33 18 13)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity=".9"/>
+      <stop offset=".42" stop-color="#E7EEF7" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#B8C8DC" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="loop" x1="13" y1="20" x2="51" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#D8E3F0" stop-opacity=".58"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="#26384E"/>
+  <circle cx="32" cy="32" r="27" fill="url(#base)"/>
+  <circle cx="32" cy="32" r="27" fill="url(#light)"/>
+  <path d="M15.5 31.8c0-7.3 5.9-13.2 13.2-13.2 5.1 0 9.6 2.9 11.8 7.2" fill="none" stroke="url(#loop)" stroke-linecap="round" stroke-width="5.2"/>
+  <path d="M48.5 32.2c0 7.3-5.9 13.2-13.2 13.2-5.1 0-9.6-2.9-11.8-7.2" fill="none" stroke="url(#loop)" stroke-linecap="round" stroke-width="5.2"/>
+  <circle cx="32" cy="32" r="3.2" fill="#fff" fill-opacity=".92"/>
+</svg>
