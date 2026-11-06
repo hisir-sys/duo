@@ -56,7 +56,16 @@ def _save(p, o):
 # ---- config, login ------------------------------------------------------
 def get_cfg():
     c = {"claude_model": MODELS["claude"][0], "openai_model": MODELS["chatgpt"][0], "lead": "claude", "coding": True}
-    c.update(_load(CFG, {}))
+    saved = _load(CFG, {})
+    if isinstance(saved, dict):
+        c.update({k: v for k, v in saved.items() if k in c})
+    if c["lead"] not in KN:
+        c["lead"] = "claude"
+    c["coding"] = bool(c["coding"])
+    for provider in KN:
+        key = MK[provider]
+        if not isinstance(c[key], str) or not c[key].strip():
+            c[key] = MODELS[provider][0]
     return c
 
 
@@ -162,8 +171,16 @@ def set_mem(t):
 
 
 def add_mem(lines):
-    t = get_mem().rstrip() + "\n" + "\n".join(f"- {x}" for x in lines if x.strip()) + "\n"
-    set_mem(t)
+    existing = get_mem().rstrip()
+    known = {line.strip().lstrip("- ").casefold() for line in existing.splitlines()}
+    additions = []
+    for item in lines:
+        value = str(item).strip()
+        if value and value.casefold() not in known:
+            additions.append(f"- {value}")
+            known.add(value.casefold())
+    if additions:
+        set_mem(existing + "\n" + "\n".join(additions) + "\n")
 
 
 def system_prompt(cfg):
@@ -206,7 +223,7 @@ def safe_export_path(project_id, relative):
     if not re.fullmatch(r"[a-f0-9]{8}", str(project_id)):
         raise ValueError("Invalid project identifier")
     rel = Path(relative)
-    if rel.is_absolute() or not rel.parts or ".." in rel.parts:
+    if rel.is_absolute() or rel.drive or not rel.parts or ".." in rel.parts:
         raise ValueError("Unsafe export path")
     root = (WORK / project_id).resolve()
     target = (root / rel).resolve()
