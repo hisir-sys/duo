@@ -74,4 +74,4 @@ def inspect_project(root) -> str:
     if count == 0:
         lines.append("(No readable project files found.)")
     lines.append(f"\nIncluded text excerpts: {len(selected)}")
-    return "\n".join(lines) + "".join(selected)
+    return ("\n".join(lines) + "".join(selected))[:20000]
