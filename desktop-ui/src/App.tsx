@@ -243,10 +243,63 @@ function ReviewCenter({ query }: { query: string }) {
   </div>;
 }
 
+
+const projectDirectory = [
+  { id:"desktop", name:"Desktop experience refresh", initials:"DE", description:"A polished desktop workspace for planning, coding, testing and reviewing work.", stack:"Electron · React · TypeScript", branch:"main", status:"In progress", progress:68, tasks:"5 / 8 tasks", updated:"Updated recently", color:"blue", lead:"Coding Agent", next:"Finish the responsive workspace layout", tags:["Desktop UI","Electron","Frontend"] },
+  { id:"api", name:"API integration", initials:"AI", description:"A gradual integration layer connecting the desktop interface to the existing Python services.", stack:"Python · FastAPI", branch:"feature/provider-api", status:"In progress", progress:42, tasks:"3 / 7 tasks", updated:"Updated today", color:"green", lead:"Master Orchestrator", next:"Document the local bridge contract", tags:["Backend","Integration","Python"] },
+  { id:"website", name:"Website refresh", initials:"WR", description:"A refreshed public website with clear product information and a focused application flow.", stack:"React · Vite", branch:"main", status:"In review", progress:84, tasks:"8 / 10 tasks", updated:"Awaiting review", color:"amber", lead:"Review Agent", next:"Resolve the remaining review notes", tags:["Website","Frontend","Review"] },
+  { id:"research", name:"Provider comparison", initials:"PC", description:"Research notes comparing model providers, capabilities and practical trade-offs.", stack:"Research · Documentation", branch:"docs/provider-notes", status:"Completed", progress:100, tasks:"6 / 6 tasks", updated:"Completed this week", color:"violet", lead:"Research Agent", next:"Keep the decision record up to date", tags:["Research","Planning","Docs"] }
+];
+function ProjectsScreen({ query, onOpenWorkspace }: { query:string; onOpenWorkspace:()=>void }) {
+  const [filter,setFilter]=useState("All projects");
+  const [selectedId,setSelectedId]=useState("desktop");
+  const filters=["All projects","In progress","In review","Completed"];
+  const visible=projectDirectory.filter(project=>(filter==="All projects"||project.status===filter)&&[project.name,project.description,project.stack,project.branch,...project.tags].join(" ").toLowerCase().includes(query.toLowerCase()));
+  const selected=visible.find(project=>project.id===selectedId)??visible[0];
+  return <div className="content projects-content">
+    <section className="welcome projects-welcome"><div><label>— YOUR WORK</label><h1>Every project, in one place.</h1><p>Keep an eye on progress, ownership and the next step across your workspace.</p></div><span className="preview">● UI PREVIEW · SAMPLE PROJECTS</span></section>
+    <section className="projects-summary">
+      <article><span className="projects-summary-icon"><FolderKanban size={17}/></span><div><strong>04</strong><small>Total projects</small></div></article>
+      <article><span className="projects-summary-icon"><Activity size={17}/></span><div><strong>02</strong><small>In progress</small></div></article>
+      <article><span className="projects-summary-icon"><GitPullRequest size={17}/></span><div><strong>01</strong><small>In review</small></div></article>
+      <article><span className="projects-summary-icon"><Check size={17}/></span><div><strong>01</strong><small>Completed</small></div></article>
+      <div className="projects-connection"><CircleDot size={14}/><span>Sample data · backend not connected</span></div>
+    </section>
+    <div className="projects-toolbar"><div className="projects-filters" role="group" aria-label="Filter projects">{filters.map(item=><button key={item} className={filter===item?"active":""} onClick={()=>setFilter(item)}>{item}</button>)}</div><span>{visible.length} {visible.length===1?"project":"projects"}</span></div>
+    <div className="projects-layout">
+      <section className="projects-grid" aria-label="Project directory">
+        {visible.map(project=><button key={project.id} className={selected?.id===project.id?"project-card selected":"project-card"} onClick={()=>setSelectedId(project.id)} aria-pressed={selected?.id===project.id}>
+          <div className="project-card-top"><span className={"project-card-mark "+project.color}>{project.initials}</span><span className={"project-status "+project.status.toLowerCase().replaceAll(" ","-")}>{project.status}</span></div>
+          <strong>{project.name}</strong><p>{project.description}</p>
+          <div className="project-card-stack">{project.stack}</div>
+          <div className="project-card-progress"><span>Progress</span><b>{project.progress}%</b></div><div className="project-card-track"><i style={{width:project.progress+"%"}}/></div>
+          <div className="project-card-foot"><span><Check size={12}/>{project.tasks}</span><span>{project.updated}</span></div>
+        </button>)}
+        {!visible.length&&<div className="projects-empty">No projects match this search or filter.</div>}
+      </section>
+      {selected?<aside className="project-inspector">
+        <div className="project-inspector-head"><span>PROJECT OVERVIEW</span><span>PREVIEW</span></div>
+        <span className={"project-inspector-mark "+selected.color}>{selected.initials}</span>
+        <h2>{selected.name}</h2><p>{selected.description}</p>
+        <div className="project-inspector-status"><span className={"project-status "+selected.status.toLowerCase().replaceAll(" ","-")}>{selected.status}</span><small>{selected.updated}</small></div>
+        <div className="project-inspector-progress"><div><span>Overall progress</span><b>{selected.progress}%</b></div><i><span style={{width:selected.progress+"%"}}/></i></div>
+        <div className="project-inspector-section"><label>TECH STACK</label><strong>{selected.stack}</strong></div>
+        <div className="project-inspector-section"><label>ACTIVE BRANCH</label><strong><GitBranch size={13}/>{selected.branch}</strong></div>
+        <div className="project-inspector-section"><label>COORDINATION</label><strong><Bot size={13}/>{selected.lead}</strong></div>
+        <div className="project-next-step"><label>NEXT STEP</label><p>{selected.next}</p></div>
+        <div className="project-inspector-tags">{selected.tags.map(tag=><span key={tag}>{tag}</span>)}</div>
+        <button className="project-open-workspace" onClick={onOpenWorkspace}>Open workspace <ArrowUpRight size={15}/></button>
+        <small className="project-inspector-note">Preview navigation only · no files or repository data are accessed.</small>
+      </aside>:<aside className="project-inspector project-inspector-empty">Select a project to see its overview.</aside>}
+    </div>
+    <footer className="page-foot"><span>DuoAI Studio · Projects UI preview</span><span>Sample project data · No repository actions exposed</span></footer>
+  </div>;
+}
+
 export default function App() {
   const [query, setQuery] = useState("");
   const [low, setLow] = useState(false);
-  const [page, setPage] = useState<"Home" | "Agents" | "Master Control Room" | "Workspace" | "Review Center">("Home");
+  const [page, setPage] = useState<"Home" | "Projects" | "Agents" | "Master Control Room" | "Workspace" | "Review Center">("Home");
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("duoai-theme");
     return saved === "dark" ? "dark" : "light";
@@ -262,7 +315,7 @@ export default function App() {
       <div className="brand"><img src="./duo-mark.svg" alt=""/><b>DuoAI <small>STUDIO</small></b></div>
       <div className="workspace"><span>D</span><div><b>Personal workspace</b><small>Free workspace</small></div><ChevronDown size={14}/></div>
       <nav>
-        <label>OVERVIEW</label><Nav icon={LayoutDashboard} label="Home" active={page === "Home"} onClick={() => { setPage("Home"); setQuery(""); }}/><Nav icon={FolderKanban} label="Projects"/>
+        <label>OVERVIEW</label><Nav icon={LayoutDashboard} label="Home" active={page === "Home"} onClick={() => { setPage("Home"); setQuery(""); }}/><Nav icon={FolderKanban} label="Projects" active={page === "Projects"} onClick={() => { setPage("Projects"); setQuery(""); }}/>
         <label>TEAM</label><Nav icon={Users} label="Agents" active={page === "Agents"} onClick={() => { setPage("Agents"); setQuery(""); }}/><Nav icon={Workflow} label="Master Control Room" active={page === "Master Control Room"} onClick={() => { setPage("Master Control Room"); setQuery(""); }}/>
         <label>WORK</label><Nav icon={BookOpen} label="Workspace" active={page === "Workspace"} onClick={() => { setPage("Workspace"); setQuery(""); }}/><Nav icon={GitPullRequest} label="Review Center" active={page === "Review Center"} onClick={() => { setPage("Review Center"); setQuery(""); }}/>
         <label>ACCOUNT</label><Nav icon={Settings2} label="Settings"/>
@@ -270,8 +323,8 @@ export default function App() {
       <div className="side-bottom"><div className="profile"><span>S</span><div><b>Studio owner</b><small>Local preview</small></div></div></div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
-      {page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content">
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Projects" ? "Search projects..." : page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
+      {page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content">
         <section className="welcome"><div><label>— YOUR WORKSPACE</label><h1>Good to see you.</h1><p>Here’s what’s happening across your projects today.</p></div><span className="preview">● UI PREVIEW · SAMPLE DATA</span></section>
         <section className="metrics">
           <Metric label="Active projects" value="04" note="↗ 2 this month" icon={FolderKanban}/>
