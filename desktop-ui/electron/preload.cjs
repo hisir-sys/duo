@@ -1,0 +1,1 @@
+const {contextBridge}=require("electron");contextBridge.exposeInMainWorld("duoDesktop",Object.freeze({platform:process.platform,shell:"electron"}));
