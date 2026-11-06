@@ -10,6 +10,7 @@ for d in (PROJ, WORK):
 CFG, MEM, KEYS = HOME / "config.json", HOME / "memory.md", HOME / "keys.json"
 MODELS = {name: list(spec.models) for name, spec in provider_registry.PROVIDERS.items()}
 MK = {name: f"{name}_model" for name in MODELS}
+MK["chatgpt"] = "openai_model"  # Preserve existing DuoAI user settings.
 KN = {name: spec.key_name for name, spec in provider_registry.PROVIDERS.items()}
 CODING = ("You are a principal software engineer. Design before you code, write complete, runnable, "
           "production-quality code with error handling and no placeholders, prefer simple robust solutions, "
@@ -146,6 +147,11 @@ def client(p):
 
 def list_models(p, strict=False):
     return provider_registry.list_models(p, client(p), fallback=not strict)
+
+
+def test_provider_connection(p):
+    """Verify credentials and connectivity by requesting the provider model list."""
+    return list_models(p, strict=True)
 
 
 # ---- global memory.md (read on every call, so it is always in sync) ------
