@@ -174,8 +174,8 @@ class Win(QMainWindow):
             key, ok = QInputDialog.getText(s, "Sign in", f"{LABEL[p]} API key:", QLineEdit.Password)
             if not ok or not key.strip():
                 return
-            core.set_key(p, key.strip())
             try:
+                core.set_key(p, key.strip())
                 ids, cur = core.list_models(p, strict=True), mc.currentText()
                 mc.blockSignals(True)
                 mc.clear()
@@ -184,7 +184,8 @@ class Win(QMainWindow):
                 mc.blockSignals(False)
             except Exception as e:
                 core.del_key(p)
-                QMessageBox.warning(s, "Sign in failed", f"Key rejected: {e}")
+                mc.blockSignals(False)
+                QMessageBox.warning(s, "Sign in failed", f"Could not securely sign in: {e}")
         s.sync_login()
 
     def set_model(s, p, t):
@@ -277,6 +278,10 @@ class Win(QMainWindow):
         if s.w and s.w.isRunning():
             return
         s.w = Worker(fn)
+        s.plist.setEnabled(False)
+        s.prompt.setEnabled(False)
+        s.table.setEnabled(False)
+        s.w.finished.connect(lambda: (s.plist.setEnabled(True), s.prompt.setEnabled(True), s.table.setEnabled(True)))
         s.w.prog.connect(s.status.setText)
         s.w.chunk.connect(s.stream)
         s.w.ok.connect(done)
@@ -310,7 +315,7 @@ class Win(QMainWindow):
             s.add_row(t)
         s.status.setText("Plan ready - edit it, then Run tasks." if s.review.isChecked() else "")
         if not s.review.isChecked():
-            s.do_run()
+            QTimer.singleShot(100, s.do_run)
 
     def do_run(s):
         s.ensure()
