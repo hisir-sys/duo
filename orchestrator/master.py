@@ -5,7 +5,6 @@ intentionally handled by later phases.
 """
 from __future__ import annotations
 
-from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Callable, Iterable, Mapping
 
@@ -141,9 +140,10 @@ def validate_master_plan(payload, *, goal: str, provider: str) -> MasterPlan:
                 raise ValueError(f"Task '{task.id}' cannot depend on itself.")
 
     stages = _topological_stages(tuple(tasks))
+    provider_registry.get_spec(provider)
     return MasterPlan(
         goal=_short_text(goal, "Project goal", 12000),
-        provider=provider_registry.get_spec(provider) and provider,
+        provider=provider,
         tasks=tuple(tasks),
         stages=stages,
     )
@@ -179,10 +179,24 @@ class MasterOrchestrator:
         prompt = f"Project goal:\n{goal}\n\nProject context supplied by the user/app:\n{context or '(none)'}"
         output = self.ask_fn(provider, system, prompt, [], cfg)
         import json
-        try:
-            payload = json.loads(output.strip())
-        except (TypeError, json.JSONDecodeError) as exc:
-            raise ValueError("The Master returned invalid JSON. Please retry.") from exc
+        if not isinstance(output, str):
+            raise ValueError("The Master returned invalid JSON. Please retry.")
+        candidate = output.strip()
+        if candidate.startswith("```"):
+            candidate = candidate.split("\\n", 1)[-1]
+            if candidate.rstrip().endswith("```"):
+                candidate = candidate.rstrip()[:-3].strip()
+        decoder = json.JSONDecoder()
+        payload = None
+        for index, char in enumerate(candidate):
+            if char == "[":
+                try:
+                    payload = decoder.raw_decode(candidate[index:])[0]
+                    break
+                except json.JSONDecodeError:
+                    continue
+        if not isinstance(payload, list):
+            raise ValueError("The Master returned invalid JSON. Please retry.")
         plan = validate_master_plan(payload, goal=goal, provider=provider)
         invalid = [task.provider for task in plan.tasks if task.provider not in self.provider_names]
         if invalid:
