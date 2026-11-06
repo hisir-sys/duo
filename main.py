@@ -358,14 +358,23 @@ class Win(QMainWindow):
 
     def export(s):
         if s.proj:
-            files = core.export_code(s.proj)
-            QMessageBox.information(s, "Export code", "\n".join(files) if files else
-                                    "No files found. (Code blocks need a path=... label; Coding mode adds it.)")
+            try:
+                files = core.export_code(s.proj)
+                QMessageBox.information(s, "Export code", "\n".join(files) if files else
+                                        "No files found. (Code blocks need a path=... label; Coding mode adds it.)")
+            except Exception as e:
+                QMessageBox.warning(s, "Export failed", str(e))
 
     def attach(s):
         files, _ = QFileDialog.getOpenFileNames(s, "Attach images, PDFs, Word or code files")
-        s.atts += [core.load_att(f) for f in files]
-        s.attlbl.setText(f"{len(s.atts)} attached")
+        if not files:
+            return
+        try:
+            loaded = [core.load_att(path) for path in files]
+            s.atts += loaded
+            s.attlbl.setText(f"{len(s.atts)} attached")
+        except Exception as e:
+            QMessageBox.warning(s, "Attachment failed", str(e))
 
     def toggle_mic(s):
         try:
