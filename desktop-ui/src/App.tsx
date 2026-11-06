@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, Gauge, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, ArrowRight, Clock3, FileCode2, FileText, Folder, ChevronRight, Plus, Play, Terminal, CircleCheck, CircleDashed } from "lucide-react";
+import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, Gauge, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, ArrowRight, Clock3, FileCode2, FileText, Folder, ChevronRight, Plus, Play, Terminal, CircleCheck, CircleDashed, X, AlertTriangle, MessageSquare, FileDiff, GitCommit } from "lucide-react";
 import { AgentOrb } from "./AgentOrb";
 
 const updates = [
@@ -196,10 +196,57 @@ function WorkspaceScreen({ query }: { query: string }) {
   </div>;
 }
 
+
+const reviewItems = [
+  { id:"desktop-ui", title:"Polish responsive workspace layout", project:"Desktop experience refresh", author:"Coding Agent", branch:"feature/workspace-ui", status:"Needs review", files:3, additions:46, deletions:12, summary:"Tightens the project explorer and editor layout across smaller window sizes.", findings:[{level:"Note",title:"Responsive breakpoint added",detail:"The file explorer switches to a stacked layout on narrower windows."},{level:"Check",title:"Reduced-motion support",detail:"Interactive transitions respect the operating system motion preference."}], diff:[{file:"src/components/Workspace.tsx",change:"@@ layout\n- grid-template-columns: 260px 1fr;\n+ grid-template-columns: minmax(220px, .72fr) minmax(0, 1.6fr);\n\n+ // Keep the editor readable on narrow windows\n+ @media (max-width: 850px) {\n+   .workspace-main-grid { grid-template-columns: 1fr; }\n+ }"}]},
+  { id:"provider-config", title:"Add provider configuration validation", project:"API integration", author:"Coding Agent", branch:"feature/provider-validation", status:"Needs review", files:2, additions:31, deletions:4, summary:"Adds clearer validation messages for incomplete provider settings.", findings:[{level:"Warning",title:"Credential handling needs confirmation",detail:"Confirm secrets are never written to logs or returned in validation messages."},{level:"Note",title:"Input validation added",detail:"Required fields are checked before the provider configuration is accepted."}], diff:[{file:"backend/providers/config.py",change:"@@ validation\n+ def validate_provider(config):\n+     required = (\"provider\", \"model\")\n+     missing = [key for key in required if not config.get(key)]\n+     if missing:\n+         raise ValueError(\"Missing provider settings\")"}]},
+  { id:"docs-refresh", title:"Update project setup guide", project:"Website refresh", author:"Research Agent", branch:"docs/setup-guide", status:"Approved", files:1, additions:18, deletions:3, summary:"Clarifies the local setup steps and documents the current development workflow.", findings:[{level:"Note",title:"Documentation-only change",detail:"No application runtime code is changed in this proposal."}], diff:[{file:"README.md",change:"@@ local setup\n+ ## Local development\n+ Install dependencies, then run the desktop UI from its own folder.\n+ The Python backend remains a separate process during this preview phase."}]}
+];
+function ReviewCenter({ query }: { query: string }) {
+  const [items,setItems] = useState(reviewItems);
+  const [selectedId,setSelectedId] = useState("desktop-ui");
+  const [filter,setFilter] = useState("All");
+  const [tab,setTab] = useState("Overview");
+  const visible = items.filter(item => (filter === "All" || item.status === filter) && [item.title,item.project,item.author,item.branch,item.summary].join(" ").toLowerCase().includes(query.toLowerCase()));
+  const selected = visible.find(item=>item.id===selectedId) ?? visible[0];
+  const decide = (status:string) => { if(!selected) return; setItems(current=>current.map(item=>item.id===selected.id?{...item,status}:item)); };
+  return <div className="content review-content">
+    <section className="welcome review-welcome"><div><label>— QUALITY GATE</label><h1>Review before it ships.</h1><p>Inspect proposed changes, understand findings and record a review decision.</p></div><span className="preview">● UI PREVIEW · SAMPLE PROPOSALS</span></section>
+    <section className="review-summary">
+      <article><span className="review-summary-icon pending"><GitPullRequest size={17}/></span><div><strong>{items.filter(x=>x.status==="Needs review").length.toString().padStart(2,"0")}</strong><small>Awaiting review</small></div></article>
+      <article><span className="review-summary-icon approved"><Check size={17}/></span><div><strong>{items.filter(x=>x.status==="Approved").length.toString().padStart(2,"0")}</strong><small>Approved previews</small></div></article>
+      <article><span className="review-summary-icon findings"><AlertTriangle size={17}/></span><div><strong>{items.reduce((n,x)=>n+x.findings.filter(f=>f.level==="Warning").length,0).toString().padStart(2,"0")}</strong><small>Warnings to inspect</small></div></article>
+      <span className="review-summary-note"><CircleDot size={13}/> Decisions are local preview state</span>
+    </section>
+    <div className="review-filter-row">{["All","Needs review","Approved","Changes requested"].map(item=><button key={item} className={filter===item?"active":""} onClick={()=>setFilter(item)}>{item}<span>{item==="All"?items.length:items.filter(x=>x.status===item).length}</span></button>)}</div>
+    <div className="review-layout">
+      <section className="review-queue">
+        <div className="review-section-head"><div><label>PROPOSAL QUEUE</label><h2>Change requests <span>{visible.length}</span></h2></div><span className="review-queue-hint">Select a proposal</span></div>
+        {visible.map(item=><button key={item.id} className={selected?.id===item.id?"review-proposal selected":"review-proposal"} onClick={()=>{setSelectedId(item.id);setTab("Overview");}}>
+          <span className="review-proposal-icon"><FileDiff size={17}/></span><span className="review-proposal-copy"><strong>{item.title}</strong><small>{item.project}</small><em><Bot size={12}/>{item.author} · {item.files} files</em></span><span className={"review-status "+item.status.toLowerCase().replaceAll(" ","-")}>{item.status}</span>
+        </button>)}
+        {!visible.length&&<p className="review-empty">No proposals match this filter or search.</p>}
+        <div className="review-queue-foot"><span>Sample proposals only</span><span>Not linked to Git</span></div>
+      </section>
+      {selected ? <section className="review-detail">
+        <div className="review-detail-top"><div><span className="review-project-label">{selected.project}</span><h2>{selected.title}</h2><p><GitBranch size={13}/>{selected.branch}<span>·</span><Bot size={13}/>{selected.author}</p></div><span className={"review-status large "+selected.status.toLowerCase().replaceAll(" ","-")}>{selected.status}</span></div>
+        <div className="review-change-stats"><span><FileDiff size={14}/>{selected.files} files changed</span><span className="review-add">+{selected.additions}</span><span className="review-remove">−{selected.deletions}</span><span><GitCommit size={14}/> Sample change set</span></div>
+        <div className="review-tabs">{["Overview","Diff","Findings"].map(item=><button key={item} className={tab===item?"active":""} onClick={()=>setTab(item)}>{item}{item==="Findings"&&<span>{selected.findings.length}</span>}</button>)}</div>
+        {tab==="Overview"&&<div className="review-overview"><h3>Proposal summary</h3><p>{selected.summary}</p><div className="review-overview-note"><MessageSquare size={15}/><span>This proposal is illustrative sample content. No repository files have been changed by this screen.</span></div><h3>Change summary</h3><div className="review-change-row"><FileDiff size={15}/><span>{selected.files} files included in this proposal</span><b>View diff →</b></div></div>}
+        {tab==="Diff"&&<div className="review-diff-list">{selected.diff.map((entry,index)=><div className="review-diff-file" key={index}><div><FileCode2 size={14}/><strong>{entry.file}</strong><span>Sample diff</span></div><pre>{entry.change}</pre></div>)}</div>}
+        {tab==="Findings"&&<div className="review-findings">{selected.findings.map((finding,index)=><article className={"review-finding "+finding.level.toLowerCase()} key={index}><span>{finding.level==="Warning"?<AlertTriangle size={16}/>:<CircleCheck size={16}/>}</span><div><strong>{finding.title}</strong><p>{finding.detail}</p></div></article>)}</div>}
+        <div className="review-decision-bar"><div><strong>Review decision</strong><small>Changes here affect this preview only.</small></div><div><button className="review-request" onClick={()=>decide("Changes requested")}><MessageSquare size={14}/> Request changes</button><button className="review-approve" onClick={()=>decide("Approved")}><Check size={14}/> Approve preview</button></div></div>
+      </section> : <section className="review-detail review-no-selection"><GitPullRequest size={26}/><strong>Select a proposal to inspect it</strong><span>Choose an item from the queue.</span></section>}
+    </div>
+    <section className="review-safety-note"><span><ShieldCheck size={17}/></span><div><strong>Human review stays in control.</strong><p>Real approval will require backend integration, permission checks and a verified change set. These preview buttons do not merge, commit, or modify repository files.</p></div><span className="review-bridge">BACKEND CONNECTION PENDING</span></section>
+    <footer className="page-foot"><span>DuoAI Studio · Review Center UI preview</span><span>Sample proposals and local decisions · No Git actions</span></footer>
+  </div>;
+}
+
 export default function App() {
   const [query, setQuery] = useState("");
   const [low, setLow] = useState(false);
-  const [page, setPage] = useState<"Home" | "Agents" | "Master Control Room" | "Workspace">("Home");
+  const [page, setPage] = useState<"Home" | "Agents" | "Master Control Room" | "Workspace" | "Review Center">("Home");
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("duoai-theme");
     return saved === "dark" ? "dark" : "light";
@@ -217,14 +264,14 @@ export default function App() {
       <nav>
         <label>OVERVIEW</label><Nav icon={LayoutDashboard} label="Home" active={page === "Home"} onClick={() => { setPage("Home"); setQuery(""); }}/><Nav icon={FolderKanban} label="Projects"/>
         <label>TEAM</label><Nav icon={Users} label="Agents" active={page === "Agents"} onClick={() => { setPage("Agents"); setQuery(""); }}/><Nav icon={Workflow} label="Master Control Room" active={page === "Master Control Room"} onClick={() => { setPage("Master Control Room"); setQuery(""); }}/>
-        <label>WORK</label><Nav icon={BookOpen} label="Workspace" active={page === "Workspace"} onClick={() => { setPage("Workspace"); setQuery(""); }}/><Nav icon={GitPullRequest} label="Review Center"/>
+        <label>WORK</label><Nav icon={BookOpen} label="Workspace" active={page === "Workspace"} onClick={() => { setPage("Workspace"); setQuery(""); }}/><Nav icon={GitPullRequest} label="Review Center" active={page === "Review Center"} onClick={() => { setPage("Review Center"); setQuery(""); }}/>
         <label>ACCOUNT</label><Nav icon={Settings2} label="Settings"/>
       </nav>
       <div className="side-bottom"><div className="profile"><span>S</span><div><b>Studio owner</b><small>Local preview</small></div></div></div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
-      {page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : <div className="content">
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
+      {page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content">
         <section className="welcome"><div><label>— YOUR WORKSPACE</label><h1>Good to see you.</h1><p>Here’s what’s happening across your projects today.</p></div><span className="preview">● UI PREVIEW · SAMPLE DATA</span></section>
         <section className="metrics">
           <Metric label="Active projects" value="04" note="↗ 2 this month" icon={FolderKanban}/>
