@@ -158,12 +158,26 @@ def new_project(name):
 
 
 def save_project(p):
+    if not re.fullmatch(r"[a-f0-9]{8}", str(p.get("id", ""))):
+        raise ValueError("Invalid project identifier")
+    if not isinstance(p.get("name"), str) or not p["name"].strip():
+        raise ValueError("Project name is required")
+    if not isinstance(p.get("tasks", []), list) or not isinstance(p.get("log", []), list):
+        raise ValueError("Project tasks and history must be lists")
     _save(PROJ / f"{p['id']}.json", p)
 
 
 def list_projects():
-    ps = [_load(f, None) for f in PROJ.glob("*.json")]
-    return sorted([p for p in ps if p], key=lambda p: p["name"].lower())
+    projects = []
+    for path in PROJ.glob("*.json"):
+        p = _load(path, None)
+        if isinstance(p, dict) and re.fullmatch(r"[a-f0-9]{8}", str(p.get("id", ""))) and isinstance(p.get("name"), str):
+            p.setdefault("prompt", "")
+            p.setdefault("tasks", [])
+            p.setdefault("log", [])
+            if isinstance(p["tasks"], list) and isinstance(p["log"], list):
+                projects.append(p)
+    return sorted(projects, key=lambda p: p["name"].casefold())
 
 
 def safe_export_path(project_id, relative):
@@ -181,13 +195,12 @@ def safe_export_path(project_id, relative):
 
 def export_code(p):
     out = []
-    root = (WORK / p["id"]).resolve()
-    for path, code in re.findall(r"\x60\x60\x60[^\n]*?path=(\S+)\n(.*?)\x60\x60\x60", "\n".join(p["log"]), re.S):
-        rel = Path(path.strip("\x60\"'"))
-        if rel.is_absolute() or ".." in rel.parts:
-            continue
-        f = (root / rel).resolve()
-        if f != root and root not in f.parents:
+    if not re.fullmatch(r"[a-f0-9]{8}", str(p.get("id", ""))):
+        return out
+    for path, code in re.findall(r"\x60\x60\x60[^\n]*?path=(\S+)\n(.*?)\x60\x60\x60", "\n".join(p.get("log", [])), re.S):
+        try:
+            f = safe_export_path(p["id"], path.strip("\x60\"'"))
+        except ValueError:
             continue
         f.parent.mkdir(parents=True, exist_ok=True)
         _atomic_text(f, code)
@@ -235,10 +248,8 @@ def ask(p, system, prompt, atts, cfg, thinking=False, on_chunk=None):
                     emit(t)
             return "".join(out)
         if thinking:
-            try:
-                return go({**kw, "max_tokens": 12000, "thinking": {"type": "enabled", "budget_tokens": 4000}})
-            except Exception:
-                pass
+            # Do not retry after a stream may have emitted partial output.
+            return go({**kw, "max_tokens": 12000, "thinking": {"type": "enabled", "budget_tokens": 4000}})
         return go(kw)
     content = [{"type": "text", "text": prompt}] + [
         {"type": "image_url", "image_url": {"url": f"data:{a['mime']};base64,{a['b64']}"}} for a in imgs]
