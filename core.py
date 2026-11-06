@@ -58,12 +58,14 @@ def _save(p, o):
 # ---- config, login ------------------------------------------------------
 def get_cfg():
     c = {key: models[0] for key, models in MODELS.items()}
-    c.update({"lead": "claude", "coding": True})
+    c.update({"lead": "claude", "master_provider": "gemini", "coding": True})
     saved = _load(CFG, {})
     if isinstance(saved, dict):
         c.update({k: v for k, v in saved.items() if k in c})
     if c["lead"] not in KN:
         c["lead"] = "claude"
+    if c["master_provider"] not in KN:
+        c["master_provider"] = "gemini"
     c["coding"] = bool(c["coding"])
     for provider in KN:
         key = MK[provider]
@@ -157,6 +159,23 @@ def list_models(p, strict=False):
 def test_provider_connection(p):
     """Verify credentials and connectivity by requesting the provider model list."""
     return list_models(p, strict=True)
+
+
+def create_master_plan(goal, project_context="", provider=None):
+    """Create a validated Master plan using configured providers only."""
+    from orchestrator.master import MasterOrchestrator
+
+    cfg = get_cfg()
+    configured = [name for name in KN if get_key(name)]
+    if not configured:
+        raise RuntimeError("Connect at least one AI provider before asking the Master to plan.")
+    preferred = provider or cfg.get("master_provider") or "gemini"
+    if preferred not in configured:
+        preferred = cfg.get("lead") if cfg.get("lead") in configured else configured[0]
+    master = MasterOrchestrator(ask, provider_names=configured)
+    return master.create_plan(
+        goal, provider=preferred, cfg=cfg, project_context=project_context
+    )
 
 
 # ---- global memory.md (read on every call, so it is always in sync) ------
