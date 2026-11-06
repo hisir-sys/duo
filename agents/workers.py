@@ -11,7 +11,7 @@ import re
 import tempfile
 import uuid
 from dataclasses import asdict, dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Callable, Mapping
 
 import provider_registry
@@ -96,7 +96,7 @@ def _safe_artifact_path(root: Path, relative: str) -> Path:
         raise ValueError("Generated artifact path is empty.")
     normalized = relative.strip().replace("\\", "/")
     candidate = Path(normalized)
-    if candidate.is_absolute() or candidate.drive or not candidate.parts:
+    if candidate.is_absolute() or candidate.drive or PureWindowsPath(normalized).drive or PureWindowsPath(normalized).is_absolute() or not candidate.parts:
         raise ValueError("Generated artifact path must be relative.")
     if any(part in ("", ".", "..") for part in candidate.parts):
         raise ValueError("Generated artifact path contains an unsafe segment.")
