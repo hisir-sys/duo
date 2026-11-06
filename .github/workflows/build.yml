@@ -47,11 +47,21 @@ jobs:
       - name: Create setup executable
         shell: pwsh
         run: '& "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe" installer.iss'
-      - name: Smoke-test packaged executable
+      - name: Clean install and launch smoke test
         shell: pwsh
         run: |
           if (!(Test-Path "dist/DuoAI/DuoAI.exe")) { throw "DuoAI.exe missing from bundle" }
-          if (!(Get-ChildItem "dist-installer/*.exe")) { throw "Setup executable was not created" }
+          $installer = Get-ChildItem "dist-installer/*.exe" | Select-Object -First 1
+          if (!$installer) { throw "Setup executable was not created" }
+          $installDir = Join-Path $env:RUNNER_TEMP "DuoAI-CleanInstall"
+          & $installer.FullName /VERYSILENT /SUPPRESSMSGBOXES /NORESTART "/DIR=$installDir"
+          if ($LASTEXITCODE -ne 0) { throw "Silent installer failed with exit code $LASTEXITCODE" }
+          if (!(Test-Path "$installDir/DuoAI.exe")) { throw "Installed app executable is missing" }
+          $env:QT_QPA_PLATFORM = "offscreen"
+          & "$installDir/DuoAI.exe" --smoke-test
+          if ($LASTEXITCODE -ne 0) { throw "Installed application smoke test failed with exit code $LASTEXITCODE" }
+          & "$installDir/unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+          if ($LASTEXITCODE -ne 0) { throw "Uninstaller smoke test failed with exit code $LASTEXITCODE" }
       - uses: actions/upload-artifact@v4
         with:
           name: DuoAI-Windows-Installer

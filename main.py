@@ -380,8 +380,12 @@ class Win(QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    smoke_test = "--smoke-test" in sys.argv
+    app = QApplication([])
     app.setStyleSheet(STYLE)
     w = Win()
+    if smoke_test:
+        w.close()
+        sys.exit(0)
     w.show()
     sys.exit(app.exec())
