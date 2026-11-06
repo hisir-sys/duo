@@ -23,6 +23,21 @@ def _load(p, d):
         return d
 
 
+def _atomic_text(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\\n") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+    except Exception:
+        try: os.unlink(tmp)
+        except OSError: pass
+        raise
+
+
 def _save(p, o):
     p.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=f".{p.name}.", suffix=".tmp", dir=p.parent)
@@ -90,11 +105,14 @@ def del_key(p):
         else: KEYS.unlink(missing_ok=True)
 
 def client(p):
+    key = get_key(p)
+    if not key:
+        raise RuntimeError(f"Sign in to {p.title()} first, or set the matching API-key environment variable.")
     if p == "claude":
         import anthropic
-        return anthropic.Anthropic(api_key=get_key(p))
+        return anthropic.Anthropic(api_key=key)
     from openai import OpenAI
-    return OpenAI(api_key=get_key(p))
+    return OpenAI(api_key=key)
 
 
 def list_models(p, strict=False):
@@ -150,13 +168,16 @@ def list_projects():
 
 def export_code(p):
     out = []
-    for path, code in re.findall(r"```[^\n]*?path=(\S+)\n(.*?)```", "\n".join(p["log"]), re.S):
-        rel = Path(path.strip("`\"'"))
+    root = (WORK / p["id"]).resolve()
+    for path, code in re.findall(r"\x60\x60\x60[^\n]*?path=(\S+)\n(.*?)\x60\x60\x60", "\n".join(p["log"]), re.S):
+        rel = Path(path.strip("\x60\"'"))
         if rel.is_absolute() or ".." in rel.parts:
             continue
-        f = WORK / p["id"] / rel
+        f = (root / rel).resolve()
+        if f != root and root not in f.parents:
+            continue
         f.parent.mkdir(parents=True, exist_ok=True)
-        f.write_text(code, "utf-8")
+        _atomic_text(f, code)
         out.append(str(f))
     return out
 
