@@ -1,52 +1,52 @@
 :root[data-theme="dark"] body{background:var(--bg);color:var(--text)}
-:root[data-theme="dark"] .sidebar{background:rgba(24,30,38,.94)}
-:root[data-theme="dark"] .workspace,:root[data-theme="dark"] .search,:root[data-theme="dark"] .icon-btn{background:var(--surface)}
-:root[data-theme="dark"] .workspace>span,:root[data-theme="dark"] .profile>span{background:#304056;color:#a9bfdf}
-:root[data-theme="dark"] .nav-item{color:#aeb8c6}
-:root[data-theme="dark"] .nav-item svg{color:#8998aa}
-:root[data-theme="dark"] .nav-item.active{background:var(--blue-soft);border-color:#91a9cc30;color:#dce7f6}
-:root[data-theme="dark"] .nav-item.active svg{color:#b3c9e8}
-:root[data-theme="dark"] .topbar{background:rgba(25,31,40,.86)}
-:root[data-theme="dark"] .crumb b{color:#e4e9f0}
-:root[data-theme="dark"] .search{color:#a8b2c0}
-:root[data-theme="dark"] .search input{color:var(--text)}
-:root[data-theme="dark"] .search input::placeholder{color:#7f8a99}
-:root[data-theme="dark"] .icon-btn{color:#bac5d3}
-:root[data-theme="dark"] .preview{background:#29384c;color:#b5c9e5}
-:root[data-theme="dark"] .metric.warm{background:#292a2b;border-color:#ffffff12}
-:root[data-theme="dark"] .metric-head svg{color:#a4b6d0}
-:root[data-theme="dark"] .gauge .track{stroke:var(--chart-track)}
-:root[data-theme="dark"] .gauge .value{stroke:#91a9cc}
-:root[data-theme="dark"] .gauge b small{color:#a8b2c0}
-:root[data-theme="dark"] .project-row{background:var(--surface-muted);border-color:var(--border)}
-:root[data-theme="dark"] .project-icon{background:#304056;color:#b4c9e8}
-:root[data-theme="dark"] .project-row small,:root[data-theme="dark"] .project-meta,:root[data-theme="dark"] .progress-label{color:#9ba8b8}
-:root[data-theme="dark"] .project-row em{background:#304056;color:#b6c9e4}
-:root[data-theme="dark"] .progress{background:#3a4552}
-:root[data-theme="dark"] .progress i{background:#91a9cc}
-:root[data-theme="dark"] .project hr{background:var(--border)}
-:root[data-theme="dark"] .chart i{background:#536174}
-:root[data-theme="dark"] .chart div:nth-child(6) i{background:#91a9cc}
-:root[data-theme="dark"] .chart-head small,:root[data-theme="dark"] .chart-head>span{color:#9aa8b9}
-:root[data-theme="dark"] .focus{background:linear-gradient(135deg,#2a384b,#243142);border-color:#91a9cc25}
-:root[data-theme="dark"] .focus h2{color:#e0e9f5}
-:root[data-theme="dark"] .focus p,:root[data-theme="dark"] .focus footer{color:#a8b9ce}
-:root[data-theme="dark"] .focus footer{border-color:#ffffff18}
-:root[data-theme="dark"] .focus-head span,:root[data-theme="dark"] .focus-head small{color:#b0c5e2}
-:root[data-theme="dark"] .review{background:linear-gradient(135deg,#33332f,#2a2b29);border-color:#d8d6cc20}
-:root[data-theme="dark"] .review h3{color:#e6e2d8}
-:root[data-theme="dark"] .review p,:root[data-theme="dark"] .review footer{color:#b1ad9f}
-:root[data-theme="dark"] .review footer{border-color:#ffffff18}
-:root[data-theme="dark"] .review-head{color:#c2b38f}
-:root[data-theme="dark"] .review footer b{color:#d2bd8f}
-:root[data-theme="dark"] .feed{border-color:#ffffff0d}
-:root[data-theme="dark"] .feed b{color:#dce2ea}
-:root[data-theme="dark"] .feed small{color:#929eae}
-:root[data-theme="dark"] .avatar{background:#304056;color:#c0d2eb}
-:root[data-theme="dark"] .feed em{background:#2b394b;color:#b6c9e4}
-:root[data-theme="dark"] .effects{background:var(--overlay);color:#aeb8c5;border-color:var(--border)}
-:root[data-theme="dark"] .orb{box-shadow:inset -8px -10px 20px #10182080,inset 6px 7px 15px #ffffffa8,0 9px 22px #00000040}
-:root[data-theme="dark"] .theme-toggle{color:#e0c58d}
+.sidebar{background:var(--sidebar-bg)}
+.workspace,.search,.icon-btn{background:var(--surface)}
+.workspace>span,.profile>span{background:var(--soft-blue);color:var(--soft-blue-text)}
+.nav-item{color:var(--nav-text)}
+.nav-item svg{color:var(--nav-icon)}
+.nav-item.active{background:var(--blue-soft);border-color:var(--border);color:var(--active-text)}
+.nav-item.active svg{color:var(--active-icon)}
+.topbar{background:var(--topbar-bg)}
+.crumb b{color:var(--text)}
+.search{color:var(--muted)}
+.search input{color:var(--text)}
+.search input::placeholder{color:var(--soft)}
+.icon-btn{color:var(--muted)}
+.preview{background:var(--blue-soft);color:var(--blue)}
+.metric.warm{background:var(--warm-bg);border-color:var(--warm-border)}
+.metric-head svg{color:var(--blue)}
+.gauge .track{stroke:var(--chart-track)}
+.gauge .value{stroke:var(--blue)}
+.gauge b small{color:var(--muted)}
+.project-row{background:var(--project-bg);border-color:var(--border)}
+.project-icon{background:var(--project-icon-bg);color:var(--blue)}
+.project-row small,.project-meta,.progress-label{color:var(--soft)}
+.project-row em{background:var(--project-tag-bg);color:var(--blue)}
+.progress{background:var(--progress-track)}
+.progress i{background:var(--blue)}
+.project hr{background:var(--border)}
+.chart i{background:var(--chart-bar)}
+.chart div:nth-child(6) i{background:var(--blue)}
+.chart-head small,.chart-head>span{color:var(--soft)}
+.focus{background:linear-gradient(135deg,var(--focus-start),var(--focus-end));border-color:var(--border)}
+.focus h2{color:var(--focus-title)}
+.focus p,.focus footer{color:var(--focus-copy)}
+.focus footer{border-color:var(--border)}
+.focus-head span,.focus-head small{color:var(--blue)}
+.review{background:linear-gradient(135deg,var(--review-start),var(--review-end));border-color:var(--warm-border)}
+.review h3{color:var(--review-title)}
+.review p,.review footer{color:var(--review-copy)}
+.review footer{border-color:var(--border)}
+.review-head{color:var(--review-accent)}
+.review footer b{color:var(--review-accent)}
+.feed{border-color:var(--feed-line)}
+.feed b{color:var(--feed-title)}
+.feed small{color:var(--feed-copy)}
+.avatar{background:var(--soft-blue);color:var(--soft-blue-text)}
+.feed em{background:var(--tag-bg);color:var(--blue)}
+.effects{background:var(--overlay);color:var(--toggle-text);border-color:var(--border)}
+.orb{box-shadow:var(--orb-shadow)}
+.theme-toggle{color:var(--amber)}
 .nav-item:not(:disabled),.icon-btn,.effects{cursor:pointer}
 .nav-item:not(:disabled):hover,.icon-btn:hover,.effects:hover{border-color:var(--blue);background:var(--blue-soft)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
