@@ -146,7 +146,12 @@ def client(p):
 
 
 def list_models(p, strict=False):
-    return provider_registry.list_models(p, client(p), fallback=not strict)
+    try:
+        return provider_registry.list_models(p, client(p), fallback=not strict)
+    except Exception:
+        if strict:
+            raise
+        return MODELS[p]
 
 
 def test_provider_connection(p):
