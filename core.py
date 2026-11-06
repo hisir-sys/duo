@@ -64,7 +64,29 @@ def set_cfg(c):
     _save(CFG, c)
 
 
+def migrate_legacy_keys():
+    """Move old plaintext credentials into the OS vault, then delete the legacy file."""
+    if not KEYS.exists():
+        return
+    legacy = _load(KEYS, {})
+    if not isinstance(legacy, dict) or not legacy:
+        return
+    try:
+        import keyring
+        if getattr(keyring.get_keyring(), "priority", 0) <= 0:
+            return
+        for provider, storage_name in KN.items():
+            value = legacy.get(storage_name)
+            if isinstance(value, str) and value:
+                keyring.set_password("duoai", storage_name, value)
+        KEYS.unlink(missing_ok=True)
+    except Exception:
+        # The old file is never read as a credential fallback.
+        return
+
+
 def get_key(p):
+    migrate_legacy_keys()
     if p not in KN: raise ValueError("Unknown provider")
     env = {"claude": "ANTHROPIC_API_KEY", "chatgpt": "OPENAI_API_KEY"}[p]
     if os.environ.get(env): return os.environ[env]
@@ -146,7 +168,7 @@ def add_mem(lines):
 
 def system_prompt(cfg):
     s = "You are one of two AI collaborators (Claude and ChatGPT) working on the same project."
-    s += "\n\nShared memory (user facts and preferences; follow them):\n" + get_mem()
+    s += "\n\nShared memory (user-approved facts and preferences; follow them):\n" + get_mem()
     return s + ("\n\n" + CODING if cfg.get("coding") else "")
 
 
