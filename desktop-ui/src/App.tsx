@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, Gauge, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, ArrowRight, Clock3 } from "lucide-react";
+import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, Gauge, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, ArrowRight, Clock3, FileCode2, FileText, Folder, ChevronRight, Plus, Play, Terminal, CircleCheck, CircleDashed } from "lucide-react";
 import { AgentOrb } from "./AgentOrb";
 
 const updates = [
@@ -133,10 +133,74 @@ function MasterControlRoom({ query }: { query: string }) {
     <footer className="page-foot"><span>DuoAI Studio · Master Control Room preview</span><span>Static sample topology · No backend actions exposed</span></footer>
   </div>;
 }
+
+const workspaceProjects = [
+  { id: "desktop", name: "Desktop experience refresh", initials: "DE", language: "React · TypeScript", branch: "feature/workspace-ui", progress: 68, tasks: "5 of 8 tasks", color: "blue" },
+  { id: "api", name: "API integration", initials: "AI", language: "Python · FastAPI", branch: "feature/provider-api", progress: 42, tasks: "3 of 7 tasks", color: "green" },
+  { id: "website", name: "Website refresh", initials: "WR", language: "React · Vite", branch: "main", progress: 84, tasks: "8 of 10 tasks", color: "amber" }
+];
+const workspaceFiles = [
+  { id: "app", name: "App.tsx", path: "src / App.tsx", kind: "code", language: "tsx", content: 'import { useState } from "react";\n\nexport function WorkspaceHome() {\n  const [activeTab, setActiveTab] = useState("overview");\n\n  return (\n    <main className="workspace-home">\n      <h1>Project workspace</h1>\n      <p>Keep your work organised.</p>\n    </main>\n  );\n}' },
+  { id: "agents", name: "agents.py", path: "backend / agents.py", kind: "code", language: "python", content: 'class AgentRegistry:\n    """Keeps the available worker roles."""\n\n    def __init__(self):\n        self.roles = [\n            "coding",\n            "testing",\n            "review",\n            "research",\n        ]\n\n    def list_roles(self):\n        return self.roles' },
+  { id: "readme", name: "README.md", path: "docs / README.md", kind: "text", language: "markdown", content: '# Desktop experience refresh\n\nA focused workspace for planning, implementing, and reviewing project changes.\n\n## Current focus\n\n- Organise project files\n- Track implementation tasks\n- Keep proposed changes reviewable\n\n> Preview content only. No repository files are being edited here.' },
+  { id: "config", name: "package.json", path: "root / package.json", kind: "text", language: "json", content: '{\n  "name": "desktop-experience",\n  "private": true,\n  "scripts": {\n    "dev": "vite",\n    "build": "tsc --noEmit && vite build"\n  }\n}' }
+];
+const workspaceTasks = [
+  { id: "task-1", title: "Set up the workspace shell", detail: "Create the main project layout and navigation.", status: "Done", agent: "Coding" },
+  { id: "task-2", title: "Add project file explorer", detail: "Show a simple, searchable project structure.", status: "Done", agent: "Coding" },
+  { id: "task-3", title: "Build task overview", detail: "Group work by status and show progress.", status: "In progress", agent: "Orchestrator" },
+  { id: "task-4", title: "Review responsive layout", detail: "Check narrow screens and dark theme.", status: "To do", agent: "Review" }
+];
+function WorkspaceScreen({ query }: { query: string }) {
+  const [projectId, setProjectId] = useState("desktop");
+  const [fileId, setFileId] = useState("app");
+  const [tab, setTab] = useState("Files");
+  const [taskFilter, setTaskFilter] = useState("All");
+  const project = workspaceProjects.find(item => item.id === projectId) ?? workspaceProjects[0];
+  const file = workspaceFiles.find(item => item.id === fileId) ?? workspaceFiles[0];
+  const filteredFiles = workspaceFiles.filter(item => [item.name, item.path, item.language].join(" ").toLowerCase().includes(query.toLowerCase()));
+  const filteredTasks = workspaceTasks.filter(item => (taskFilter === "All" || item.status === taskFilter) && [item.title, item.detail, item.agent, item.status].join(" ").toLowerCase().includes(query.toLowerCase()));
+  const doneCount = workspaceTasks.filter(item => item.status === "Done").length;
+  return <div className="content workspace-content">
+    <section className="welcome workspace-welcome"><div><label>— PROJECT WORKSPACE</label><h1>Make space for good work.</h1><p>Your project files, tasks and agent hand-offs in one organised view.</p></div><span className="preview">● UI PREVIEW · SAMPLE PROJECT</span></section>
+    <section className="workspace-project-strip">
+      <div className="workspace-project-picker"><span className={"workspace-project-mark " + project.color}>{project.initials}</span><div><small>ACTIVE PROJECT</small><strong>{project.name}</strong><em>{project.language}</em></div><ChevronDown size={15}/></div>
+      <div className="workspace-project-meta"><span><GitBranch size={14}/>{project.branch}</span><span><CircleDot size={13}/>{project.tasks}</span></div>
+      <div className="workspace-progress"><div><span>Project progress</span><b>{project.progress}%</b></div><i><span style={{width: project.progress + "%"}}/></i></div>
+    </section>
+    <div className="workspace-project-tabs" role="group" aria-label="Choose sample project">
+      {workspaceProjects.map(item => <button key={item.id} className={projectId === item.id ? "active" : ""} onClick={() => { setProjectId(item.id); setFileId("app"); }}>{item.name}</button>)}
+    </div>
+    <div className="workspace-main-grid">
+      <section className="workspace-files-panel">
+        <div className="workspace-panel-heading"><div><label>PROJECT EXPLORER</label><h2>Files <span>{filteredFiles.length}</span></h2></div><button className="workspace-quiet-action" aria-label="Add file (preview only)" title="Preview only"><Plus size={16}/></button></div>
+        <div className="workspace-root"><Folder size={15}/><strong>{project.id === "desktop" ? "desktop-experience" : project.id === "api" ? "api-integration" : "website-refresh"}</strong><ChevronDown size={14}/></div>
+        <div className="workspace-file-list">
+          {filteredFiles.map(item => <button key={item.id} className={fileId === item.id ? "workspace-file active" : "workspace-file"} onClick={() => setFileId(item.id)}><span className="workspace-file-icon">{item.kind === "code" ? <FileCode2 size={15}/> : <FileText size={15}/>}</span><span><strong>{item.name}</strong><small>{item.path}</small></span><ChevronRight size={14}/></button>)}
+          {!filteredFiles.length && <p className="workspace-no-results">No files match this search.</p>}
+        </div>
+        <div className="workspace-explorer-foot"><span>4 sample files</span><span>Read-only preview</span></div>
+      </section>
+      <section className="workspace-editor-panel">
+        <div className="workspace-editor-top"><div className="workspace-editor-tabs"><span className="workspace-editor-tab"><FileCode2 size={14}/>{file.name}<i/></span></div><span className="workspace-readonly"><CircleCheck size={13}/> Preview file</span></div>
+        <div className="workspace-file-path">{project.name} <ChevronRight size={12}/> {file.path}</div>
+        <div className="workspace-code-area"><div className="workspace-line-numbers">{file.content.split("\n").map((_,index)=><span key={index}>{index+1}</span>)}</div><pre><code>{file.content}</code></pre></div>
+        <div className="workspace-editor-foot"><span>{file.language.toUpperCase()}</span><span>Sample content · Not connected to disk</span></div>
+      </section>
+    </div>
+    <section className="workspace-tasks-panel">
+      <div className="workspace-panel-heading"><div><label>EXECUTION PLAN</label><h2>Task board <span>{doneCount}/{workspaceTasks.length} complete</span></h2></div><div className="workspace-task-filters">{["All","To do","In progress","Done"].map(item=><button key={item} className={taskFilter === item ? "active" : ""} onClick={()=>setTaskFilter(item)}>{item}</button>)}</div></div>
+      <div className="workspace-task-list">{filteredTasks.map(task=><article className="workspace-task" key={task.id}><span className={"workspace-task-status " + task.status.toLowerCase().replace(" ","-")}>{task.status === "Done" ? <CircleCheck size={16}/> : task.status === "In progress" ? <Play size={14}/> : <CircleDashed size={16}/>}</span><div className="workspace-task-copy"><strong>{task.title}</strong><small>{task.detail}</small></div><span className="workspace-task-agent"><Bot size={13}/>{task.agent}</span><span className={"workspace-task-pill " + task.status.toLowerCase().replace(" ","-")}>{task.status}</span></article>)}{!filteredTasks.length && <p className="workspace-no-results">No tasks match this filter or search.</p>}</div>
+    </section>
+    <section className="workspace-terminal-note"><span><Terminal size={16}/></span><div><strong>Execution panel comes next</strong><p>Terminal output, run controls, and real agent task updates will be connected only when the Electron-to-Python bridge is ready.</p></div><span className="workspace-bridge-tag">BACKEND BRIDGE PENDING</span></section>
+    <footer className="page-foot"><span>DuoAI Studio · Workspace UI preview</span><span>Sample files and tasks · No disk or backend actions</span></footer>
+  </div>;
+}
+
 export default function App() {
   const [query, setQuery] = useState("");
   const [low, setLow] = useState(false);
-  const [page, setPage] = useState<"Home" | "Agents" | "Master Control Room">("Home");
+  const [page, setPage] = useState<"Home" | "Agents" | "Master Control Room" | "Workspace">("Home");
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("duoai-theme");
     return saved === "dark" ? "dark" : "light";
@@ -154,14 +218,14 @@ export default function App() {
       <nav>
         <label>OVERVIEW</label><Nav icon={LayoutDashboard} label="Home" active={page === "Home"} onClick={() => { setPage("Home"); setQuery(""); }}/><Nav icon={FolderKanban} label="Projects"/>
         <label>TEAM</label><Nav icon={Users} label="Agents" active={page === "Agents"} onClick={() => { setPage("Agents"); setQuery(""); }}/><Nav icon={Workflow} label="Master Control Room" active={page === "Master Control Room"} onClick={() => { setPage("Master Control Room"); setQuery(""); }}/>
-        <label>WORK</label><Nav icon={BookOpen} label="Workspace"/><Nav icon={GitPullRequest} label="Review Center"/>
+        <label>WORK</label><Nav icon={BookOpen} label="Workspace" active={page === "Workspace"} onClick={() => { setPage("Workspace"); setQuery(""); }}/><Nav icon={GitPullRequest} label="Review Center"/>
         <label>ACCOUNT</label><Nav icon={Settings2} label="Settings"/>
       </nav>
       <div className="side-bottom"><div className="profile"><span>S</span><div><b>Studio owner</b><small>Local preview</small></div></div></div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
-      {page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : <div className="content">
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
+      {page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : <div className="content">
         <section className="welcome"><div><label>— YOUR WORKSPACE</label><h1>Good to see you.</h1><p>Here’s what’s happening across your projects today.</p></div><span className="preview">● UI PREVIEW · SAMPLE DATA</span></section>
         <section className="metrics">
           <Metric label="Active projects" value="04" note="↗ 2 this month" icon={FolderKanban}/>
