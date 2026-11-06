@@ -59,14 +59,15 @@ jobs:
           $installer = Get-ChildItem "dist-installer/*.exe" | Select-Object -First 1
           if (!$installer) { throw "Setup executable was not created" }
           $installDir = Join-Path $env:RUNNER_TEMP "DuoAI-CleanInstall"
-          & $installer.FullName /VERYSILENT /SUPPRESSMSGBOXES /NORESTART "/DIR=$installDir"
-          if ($LASTEXITCODE -ne 0) { throw "Silent installer failed with exit code $LASTEXITCODE" }
+          $install = Start-Process -FilePath $installer.FullName -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=$installDir") -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "Silent installer failed with exit code $($install.ExitCode)" }
           if (!(Test-Path "$installDir/DuoAI.exe")) { throw "Installed app executable is missing" }
           $env:QT_QPA_PLATFORM = "offscreen"
-          & "$installDir/DuoAI.exe" --smoke-test
-          if ($LASTEXITCODE -ne 0) { throw "Installed application smoke test failed with exit code $LASTEXITCODE" }
-          & "$installDir/unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-          if ($LASTEXITCODE -ne 0) { throw "Uninstaller smoke test failed with exit code $LASTEXITCODE" }
+          $app = Start-Process -FilePath "$installDir/DuoAI.exe" -ArgumentList "--smoke-test" -Wait -PassThru
+          if ($app.ExitCode -ne 0) { throw "Installed application smoke test failed with exit code $($app.ExitCode)" }
+          $uninstall = Start-Process -FilePath "$installDir/unins000.exe" -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART") -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "Uninstaller smoke test failed with exit code $($uninstall.ExitCode)" }
+          if (Test-Path "$installDir/DuoAI.exe") { throw "Uninstaller left the application executable behind" }
       - uses: actions/upload-artifact@v4
         with:
           name: DuoAI-Windows-Installer
