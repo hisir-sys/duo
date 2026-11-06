@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Activity, Bell, BookOpen, Check, ChevronDown, FolderKanban, GitPullRequest, Gauge, LayoutDashboard, Search, Settings2, Sparkles, Users, Workflow } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, Bell, BookOpen, Check, ChevronDown, FolderKanban, GitPullRequest, Gauge, LayoutDashboard, Moon, Search, Settings2, Sparkles, Sun, Users, Workflow } from "lucide-react";
 import { AgentOrb } from "./AgentOrb";
 
 const updates = [
@@ -18,6 +18,14 @@ function Metric({ label, value, note, icon: Icon, warm = false }: any) {
 export default function App() {
   const [query, setQuery] = useState("");
   const [low, setLow] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("duoai-theme");
+    return saved === "dark" ? "dark" : "light";
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("duoai-theme", theme);
+  }, [theme]);
   const bars = [32, 48, 39, 66, 54, 78, 62];
   const visible = updates.filter((row) => row.join(" ").toLowerCase().includes(query.toLowerCase()));
   return <div className={low ? "shell low" : "shell"}>
@@ -33,7 +41,7 @@ export default function App() {
       <div className="side-bottom"><div className="profile"><span>S</span><div><b>Studio owner</b><small>Local preview</small></div></div></div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>Home</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder="Search activity..." value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><AgentOrb compact/></div></header>
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>Home</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder="Search activity..." value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
       <div className="content">
         <section className="welcome"><div><label>— YOUR WORKSPACE</label><h1>Good to see you.</h1><p>Here’s what’s happening across your projects today.</p></div><span className="preview">● UI PREVIEW · SAMPLE DATA</span></section>
         <section className="metrics">
