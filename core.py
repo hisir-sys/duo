@@ -450,3 +450,11 @@ def transcribe(path):
             return client("chatgpt").audio.transcriptions.create(model="gpt-4o-mini-transcribe", file=f).text
     finally:
         Path(path).unlink(missing_ok=True)
+
+
+def run_master_workers(plan, *, project_id="adhoc", project_context=""):
+    """Run a validated MasterPlan with isolated, proposal-only worker agents."""
+    from agents.workers import MasterWorkerTeam
+    return MasterWorkerTeam(ask, WORK).run(
+        plan, cfg=get_cfg(), project_id=project_id, project_context=project_context
+    )
