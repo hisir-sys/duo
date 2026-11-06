@@ -154,7 +154,6 @@ const workspaceTasks = [
 function WorkspaceScreen({ query }: { query: string }) {
   const [projectId, setProjectId] = useState("desktop");
   const [fileId, setFileId] = useState("app");
-  const [tab, setTab] = useState("Files");
   const [taskFilter, setTaskFilter] = useState("All");
   const project = workspaceProjects.find(item => item.id === projectId) ?? workspaceProjects[0];
   const file = workspaceFiles.find(item => item.id === fileId) ?? workspaceFiles[0];
