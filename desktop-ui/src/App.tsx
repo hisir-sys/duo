@@ -209,7 +209,7 @@ function ReviewCenter({ query }: { query: string }) {
   const [tab,setTab] = useState("Overview");
   const visible = items.filter(item => (filter === "All" || item.status === filter) && [item.title,item.project,item.author,item.branch,item.summary].join(" ").toLowerCase().includes(query.toLowerCase()));
   const selected = visible.find(item=>item.id===selectedId) ?? visible[0];
-  const decide = (status:string) => { if(!selected) return; setItems(current=>current.map(item=>item.id===selected.id?{...item,status}:item)); };
+  const decide = (status:"Approved" | "Changes requested") => { if(!selected) return; setItems(current=>current.map(item=>item.id===selected.id?{...item,status}:item)); };
   return <div className="content review-content">
     <section className="welcome review-welcome"><div><label>— QUALITY GATE</label><h1>Review before it ships.</h1><p>Inspect proposed changes, understand findings and record a review decision.</p></div><span className="preview">● UI PREVIEW · SAMPLE PROPOSALS</span></section>
     <section className="review-summary">
