@@ -1,0 +1,80 @@
+/* Workspace: project files, sample editor, and task board preview. */
+.workspace-content { max-width:1480px; }
+.workspace-welcome { margin-bottom:17px; }
+.workspace-project-strip { display:grid; grid-template-columns:minmax(230px,1.3fr) minmax(180px,1fr) minmax(180px,.8fr); align-items:center; gap:18px; padding:14px 17px; border:1px solid var(--border); border-radius:var(--radius); background:var(--glass); box-shadow:var(--shadow); }
+.workspace-project-picker { display:flex; align-items:center; gap:11px; min-width:0; }
+.workspace-project-mark { display:grid; flex:none; place-items:center; width:39px; height:39px; border-radius:11px; background:#e8edf5; color:#58759c; font:600 11px "JetBrains Mono",monospace; }
+.workspace-project-mark.green { background:#e9f1ec; color:#5d896f; } .workspace-project-mark.amber { background:#f4efe4; color:#a18450; }
+.workspace-project-picker>div { display:flex; min-width:0; flex-direction:column; gap:3px; }
+.workspace-project-picker small,.workspace-panel-heading label { color:var(--soft); font-size:8px; font-weight:700; letter-spacing:1px; }
+.workspace-project-picker strong { overflow:hidden; color:var(--text); font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.workspace-project-picker em { color:var(--muted); font-size:9px; font-style:normal; }
+.workspace-project-picker>svg { margin-left:auto; color:var(--soft); }
+.workspace-project-meta { display:flex; flex-wrap:wrap; gap:9px 15px; color:var(--muted); font-size:9px; }
+.workspace-project-meta span { display:flex; align-items:center; gap:6px; }
+.workspace-progress>div { display:flex; justify-content:space-between; margin-bottom:7px; color:var(--muted); font-size:9px; }
+.workspace-progress b { color:var(--text); font-family:"JetBrains Mono",monospace; }
+.workspace-progress>i { display:block; height:5px; overflow:hidden; border-radius:8px; background:var(--border); }
+.workspace-progress>i span { display:block; height:100%; border-radius:8px; background:var(--blue); }
+.workspace-project-tabs { display:flex; gap:7px; overflow-x:auto; margin:10px 0 14px; padding-bottom:2px; }
+.workspace-project-tabs button,.workspace-task-filters button { flex:none; padding:7px 10px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted); font-size:9px; cursor:pointer; }
+.workspace-project-tabs button.active,.workspace-task-filters button.active { border-color:var(--border); background:var(--surface); color:var(--text); box-shadow:0 2px 7px #1d2d4010; }
+.workspace-main-grid { display:grid; grid-template-columns:minmax(220px,.72fr) minmax(0,1.6fr); gap:13px; align-items:stretch; }
+.workspace-files-panel,.workspace-editor-panel,.workspace-tasks-panel { min-width:0; overflow:hidden; border:1px solid var(--border); border-radius:var(--radius); background:var(--glass); box-shadow:var(--shadow); }
+.workspace-files-panel { display:flex; flex-direction:column; }
+.workspace-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 16px 12px; }
+.workspace-panel-heading h2 { display:flex; align-items:center; gap:8px; margin:5px 0 0; color:var(--text); font-size:14px; font-weight:600; }
+.workspace-panel-heading h2 span { padding:3px 6px; border-radius:6px; background:var(--surface-muted); color:var(--soft); font:500 8px "JetBrains Mono",monospace; }
+.workspace-quiet-action { display:grid; place-items:center; width:28px; height:28px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--muted); }
+.workspace-root { display:flex; align-items:center; gap:8px; margin:0 11px 7px; padding:9px; border-radius:8px; background:var(--surface-muted); color:var(--muted); }
+.workspace-root strong { flex:1; color:var(--text); font-size:9px; font-weight:600; }
+.workspace-file-list { padding:0 8px 10px; }
+.workspace-file { display:flex; align-items:center; gap:9px; width:100%; padding:9px 8px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted); text-align:left; cursor:pointer; }
+.workspace-file:hover,.workspace-file.active { border-color:var(--border); background:var(--surface-muted); }
+.workspace-file-icon { display:grid; place-items:center; width:27px; height:27px; border-radius:7px; background:var(--blue-soft); color:var(--blue); }
+.workspace-file>span:nth-child(2) { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
+.workspace-file strong { color:var(--text); font-size:9px; font-weight:600; }
+.workspace-file small { overflow:hidden; color:var(--soft); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
+.workspace-file>svg { color:var(--soft); }
+.workspace-explorer-foot { display:flex; justify-content:space-between; gap:6px; margin-top:auto; padding:10px 13px; border-top:1px solid var(--border); color:var(--soft); font-size:8px; }
+.workspace-editor-panel { display:flex; flex-direction:column; min-height:315px; }
+.workspace-editor-top { display:flex; align-items:center; justify-content:space-between; min-height:44px; padding:0 14px; border-bottom:1px solid var(--border); }
+.workspace-editor-tab { display:flex; align-items:center; gap:7px; color:var(--text); font-size:9px; }
+.workspace-editor-tab svg { color:var(--blue); } .workspace-editor-tab i { width:5px; height:5px; border-radius:50%; background:var(--amber); }
+.workspace-readonly { display:flex; align-items:center; gap:5px; color:var(--soft); font-size:8px; }
+.workspace-file-path { display:flex; align-items:center; gap:6px; padding:10px 16px; border-bottom:1px solid var(--border); color:var(--soft); font-size:8px; }
+.workspace-code-area { display:grid; grid-template-columns:34px minmax(0,1fr); flex:1; min-height:210px; padding:14px 12px 16px 0; overflow:auto; background:var(--surface-muted); }
+.workspace-line-numbers { display:flex; flex-direction:column; align-items:flex-end; gap:0; padding-right:11px; color:var(--soft); font:9px/1.85 "JetBrains Mono",monospace; user-select:none; }
+.workspace-code-area pre { margin:0; overflow:visible; color:var(--text-body); font:9px/1.85 "JetBrains Mono",monospace; white-space:pre; }
+.workspace-editor-foot { display:flex; justify-content:space-between; gap:8px; padding:9px 13px; border-top:1px solid var(--border); color:var(--soft); font-size:8px; }
+.workspace-editor-foot span:first-child { color:var(--blue); font-weight:700; letter-spacing:.5px; }
+.workspace-tasks-panel { margin-top:13px; }
+.workspace-task-filters { display:flex; flex-wrap:wrap; gap:2px; }
+.workspace-task-filters button { padding:6px 8px; font-size:8px; }
+.workspace-task-list { padding:0 13px 9px; }
+.workspace-task { display:flex; align-items:center; gap:11px; padding:11px 3px; border-top:1px solid var(--border); }
+.workspace-task-status { display:grid; flex:none; place-items:center; width:27px; height:27px; border-radius:8px; background:var(--surface-muted); color:var(--soft); }
+.workspace-task-status.done { background:#e9f1ec; color:#5d896f; } .workspace-task-status.in-progress { background:#e8edf5; color:#58759c; }
+.workspace-task-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:4px; }
+.workspace-task-copy strong { color:var(--text); font-size:9px; font-weight:600; }
+.workspace-task-copy small { overflow:hidden; color:var(--muted); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
+.workspace-task-agent { display:flex; align-items:center; gap:5px; color:var(--muted); font-size:8px; }
+.workspace-task-pill { min-width:62px; padding:5px 7px; border-radius:7px; background:var(--surface-muted); color:var(--muted); font-size:8px; text-align:center; }
+.workspace-task-pill.done { background:#e9f1ec; color:#5d896f; } .workspace-task-pill.in-progress { background:#e8edf5; color:#58759c; }
+.workspace-terminal-note { display:flex; align-items:center; gap:11px; margin-top:13px; padding:13px 15px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface-muted); }
+.workspace-terminal-note>span:first-child { display:grid; flex:none; place-items:center; width:31px; height:31px; border-radius:9px; background:var(--blue-soft); color:var(--blue); }
+.workspace-terminal-note>div { flex:1; min-width:0; }
+.workspace-terminal-note strong { color:var(--text); font-size:9px; }
+.workspace-terminal-note p { margin:4px 0 0; color:var(--muted); font-size:8px; line-height:1.55; }
+.workspace-bridge-tag { flex:none; color:var(--soft); font-size:7px; font-weight:700; letter-spacing:.6px; }
+.workspace-no-results { padding:17px 10px; color:var(--soft); font-size:9px; text-align:center; }
+.workspace-content .page-foot { margin-top:2px; }
+:root[data-theme="dark"] .workspace-project-mark { background:#304056; color:#b3c9e8; }
+:root[data-theme="dark"] .workspace-project-mark.green { background:#293f37; color:#9bc6ad; }
+:root[data-theme="dark"] .workspace-project-mark.amber { background:#453d2d; color:#d1b77e; }
+:root[data-theme="dark"] .workspace-task-status.done,:root[data-theme="dark"] .workspace-task-pill.done { background:#293f37; color:#9bc6ad; }
+:root[data-theme="dark"] .workspace-task-status.in-progress,:root[data-theme="dark"] .workspace-task-pill.in-progress { background:#304056; color:#b3c9e8; }
+@media(max-width:1050px) { .workspace-project-strip { grid-template-columns:1fr 1fr; } .workspace-progress { grid-column:1/-1; } }
+@media(max-width:850px) { .workspace-main-grid { grid-template-columns:1fr; } .workspace-files-panel { max-height:310px; } }
+@media(max-width:600px) { .workspace-project-strip { grid-template-columns:1fr; gap:12px; } .workspace-progress { grid-column:auto; } .workspace-task { flex-wrap:wrap; } .workspace-task-agent { margin-left:38px; } .workspace-task-pill { margin-left:auto; } .workspace-terminal-note { align-items:flex-start; flex-wrap:wrap; } .workspace-bridge-tag { margin-left:42px; } .workspace-panel-heading { align-items:flex-start; flex-direction:column; } .workspace-editor-foot { flex-wrap:wrap; } }
+@media(prefers-reduced-motion:reduce) { .workspace-file { transition:none; } }
