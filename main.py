@@ -6,18 +6,18 @@ import core
 
 STYLE = """
 * { font-family:'Inter','Segoe UI','Noto Sans',sans-serif; font-size:13px; color:#1f2430; }
-QMainWindow, QWidget#root { background:#eceef2; }
-QFrame#card { background:#fff; border:1px solid #d9dce3; border-radius:14px; }
+QMainWindow, QWidget#root { background:#080d17; color:#e8eef8; }
+QFrame#card { background:#101827; border:1px solid #243247; border-radius:14px; }
 QTextBrowser, QPlainTextEdit, QTableWidget, QListWidget, QComboBox, QLineEdit {
-  background:#fff; border:1px solid #d9dce3; border-radius:12px; padding:6px; selection-background-color:#cfd5e2; }
+  background:#0b1220; color:#e8eef8; border:1px solid #29384f; border-radius:10px; padding:7px; selection-background-color:#24456b; }
 QListWidget { border:none; } QListWidget::item { padding:9px; border-radius:8px; }
 QListWidget::item:selected { background:#1f2430; color:#fff; }
-QHeaderView::section { background:#f3f4f7; border:none; padding:6px; color:#5b6272; }
-QPushButton { background:#f7f8fa; border:1px solid #d3d7df; border-radius:10px; padding:8px 14px; }
-QPushButton:hover { background:#eef1f6; border-color:#9aa3b5; }
-QPushButton#primary { background:#1f2430; color:#fff; border:none; font-weight:600; }
-QPushButton#primary:hover { background:#383f52; }
-QLabel#logo { font-size:17px; font-weight:700; } QLabel#muted { color:#7b8294; }
+QHeaderView::section { background:#172235; border:none; padding:7px; color:#9fb0c8; }
+QPushButton { background:#172235; color:#e8eef8; border:1px solid #30425d; border-radius:10px; padding:8px 14px; }
+QPushButton:hover { background:#20314a; border-color:#4d709a; }
+QPushButton#primary { background:#2563eb; color:#fff; border:none; font-weight:600; }
+QPushButton#primary:hover { background:#3478ff; }
+QLabel { color:#e8eef8; } QLabel#logo { font-size:17px; font-weight:700; } QLabel#muted { color:#8ea1bc; }
 """
 LABEL = {"claude": "Claude", "chatgpt": "ChatGPT"}
 
@@ -140,6 +140,9 @@ class Win(QMainWindow):
         s.memtxt = QPlainTextEdit(core.get_mem())
         s.memtxt.textChanged.connect(lambda: setattr(s, "dirty", s.dirty or not s.loading))
         ml.addWidget(s.memtxt)
+        s.mem_save = QPushButton("Save memory")
+        s.mem_save.clicked.connect(s.save_memory)
+        ml.addWidget(s.mem_save)
         s.memtimer = QTimer(s)
         s.memtimer.timeout.connect(s.sync_mem)
         s.memtimer.start(1500)
@@ -171,8 +174,8 @@ class Win(QMainWindow):
             key, ok = QInputDialog.getText(s, "Sign in", f"{LABEL[p]} API key:", QLineEdit.Password)
             if not ok or not key.strip():
                 return
-            core.set_key(p, key.strip())
             try:
+                core.set_key(p, key.strip())
                 ids, cur = core.list_models(p, strict=True), mc.currentText()
                 mc.blockSignals(True)
                 mc.clear()
@@ -181,13 +184,22 @@ class Win(QMainWindow):
                 mc.blockSignals(False)
             except Exception as e:
                 core.del_key(p)
-                QMessageBox.warning(s, "Sign in failed", f"Key rejected: {e}")
+                mc.blockSignals(False)
+                QMessageBox.warning(s, "Sign in failed", f"Could not securely sign in: {e}")
         s.sync_login()
 
     def set_model(s, p, t):
         if t.strip():
             s.cfg[core.MK[p]] = t.strip()
             core.set_cfg(s.cfg)
+
+    def save_memory(s):
+        try:
+            core.set_mem(s.memtxt.toPlainText())
+            s.dirty = False
+            s.status.setText("Memory saved.")
+        except Exception as e:
+            QMessageBox.warning(s, "Memory", str(e))
 
     def sync_mem(s):
         disk, cur = core.get_mem(), s.memtxt.toPlainText()
@@ -266,6 +278,10 @@ class Win(QMainWindow):
         if s.w and s.w.isRunning():
             return
         s.w = Worker(fn)
+        s.plist.setEnabled(False)
+        s.prompt.setEnabled(False)
+        s.table.setEnabled(False)
+        s.w.finished.connect(lambda: (s.plist.setEnabled(True), s.prompt.setEnabled(True), s.table.setEnabled(True)))
         s.w.prog.connect(s.status.setText)
         s.w.chunk.connect(s.stream)
         s.w.ok.connect(done)
@@ -279,7 +295,8 @@ class Win(QMainWindow):
     def do_improve(s):
         if s.prompt.toPlainText().strip():
             s.status.setText("Improving prompt...")
-            s.busy(lambda cb, ch: core.improve(s.prompt.toPlainText(), s.cfg), s.improved)
+            prompt, cfg = s.prompt.toPlainText(), dict(s.cfg)
+            s.busy(lambda cb, ch: core.improve(prompt, cfg), s.improved)
 
     def improved(s, t):
         s.prompt.setPlainText(t)
@@ -289,7 +306,8 @@ class Win(QMainWindow):
         if s.prompt.toPlainText().strip():
             s.ensure()
             s.status.setText("Planning...")
-            s.busy(lambda cb, ch: core.plan(s.proj["prompt"], s.atts, s.cfg), s.planned)
+            goal, atts, cfg = s.proj["prompt"], list(s.atts), dict(s.cfg)
+            s.busy(lambda cb, ch: core.plan(goal, atts, cfg), s.planned)
 
     def planned(s, tasks):
         s.table.setRowCount(0)
@@ -297,44 +315,66 @@ class Win(QMainWindow):
             s.add_row(t)
         s.status.setText("Plan ready - edit it, then Run tasks." if s.review.isChecked() else "")
         if not s.review.isChecked():
-            s.do_run()
+            QTimer.singleShot(100, s.do_run)
 
     def do_run(s):
         s.ensure()
         if not s.proj["tasks"]:
             QMessageBox.information(s, "No tasks", "Add tasks or use 'Plan with lead AI'.")
             return
-        goal, tasks = s.proj["prompt"], s.proj["tasks"]
+        project = s.proj
+        goal, tasks = project["prompt"], [dict(t) for t in project["tasks"]]
+        atts, cfg, thinking = list(s.atts), dict(s.cfg), s.think.isChecked()
 
         def job(cb, ch):
-            res = core.run_tasks(goal, tasks, s.atts, s.cfg, s.think.isChecked(), cb, ch)
-            cb("Updating memory.md...")
+            results = core.run_tasks(goal, tasks, atts, cfg, thinking, cb, ch)
+            cb("Preparing memory suggestions for your approval...")
             try:
-                core.learn(goal, res, s.cfg)
+                facts = core.suggest_memory(goal, results, cfg)
             except Exception:
-                pass
-            return res
+                facts = []
+            return results, facts
         s.view.moveCursor(QTextCursor.End)
-        s.busy(job, s.ran)
+        s.busy(job, lambda result: s.ran(project, result))
 
-    def ran(s, tasks):
-        s.proj["log"].append(f"## Request\n{s.proj['prompt']}\n\n" + "\n\n".join(
+    def ran(s, project, result):
+        tasks, facts = result
+        project["log"].append(f"## Request\n{project['prompt']}\n\n" + "\n\n".join(
             f"### {t['title']} - {t['assignee']}\n\n{t['output']}" for t in tasks))
-        s.proj["tasks"] = tasks
-        core.save_project(s.proj)
-        s.view.setMarkdown("\n\n---\n\n".join(s.proj["log"]))
-        s.status.setText("Done. Memory updated.")
+        project["tasks"] = tasks
+        core.save_project(project)
+        if s.proj and s.proj["id"] == project["id"]:
+            s.view.setMarkdown("\n\n---\n\n".join(project["log"]))
+        if facts:
+            preview = "\n".join("• " + fact for fact in facts)
+            choice = QMessageBox.question(s, "Approve memory updates?",
+                "DuoAI suggests adding these facts to shared memory:\n\n" + preview +
+                "\n\nAdd these facts? You can edit memory in the right panel.",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if choice == QMessageBox.Yes:
+                core.add_mem(facts)
+                s.memtxt.setPlainText(core.get_mem())
+        s.status.setText("Tasks complete. Memory suggestions require your approval.")
 
     def export(s):
         if s.proj:
-            files = core.export_code(s.proj)
-            QMessageBox.information(s, "Export code", "\n".join(files) if files else
-                                    "No files found. (Code blocks need a path=... label; Coding mode adds it.)")
+            try:
+                files = core.export_code(s.proj)
+                QMessageBox.information(s, "Export code", "\n".join(files) if files else
+                                        "No files found. (Code blocks need a path=... label; Coding mode adds it.)")
+            except Exception as e:
+                QMessageBox.warning(s, "Export failed", str(e))
 
     def attach(s):
         files, _ = QFileDialog.getOpenFileNames(s, "Attach images, PDFs, Word or code files")
-        s.atts += [core.load_att(f) for f in files]
-        s.attlbl.setText(f"{len(s.atts)} attached")
+        if not files:
+            return
+        try:
+            loaded = [core.load_att(path) for path in files]
+            s.atts += loaded
+            s.attlbl.setText(f"{len(s.atts)} attached")
+        except Exception as e:
+            QMessageBox.warning(s, "Attachment failed", str(e))
 
     def toggle_mic(s):
         try:
@@ -354,8 +394,12 @@ class Win(QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    smoke_test = "--smoke-test" in sys.argv
+    app = QApplication([])
     app.setStyleSheet(STYLE)
     w = Win()
+    if smoke_test:
+        w.close()
+        sys.exit(0)
     w.show()
     sys.exit(app.exec())
