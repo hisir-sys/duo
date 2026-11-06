@@ -1,0 +1,361 @@
+import sys
+from PySide6.QtCore import Qt, QThread, Signal, QTimer
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import *
+import core
+
+STYLE = """
+* { font-family:'Inter','Segoe UI','Noto Sans',sans-serif; font-size:13px; color:#1f2430; }
+QMainWindow, QWidget#root { background:#eceef2; }
+QFrame#card { background:#fff; border:1px solid #d9dce3; border-radius:14px; }
+QTextBrowser, QPlainTextEdit, QTableWidget, QListWidget, QComboBox, QLineEdit {
+  background:#fff; border:1px solid #d9dce3; border-radius:12px; padding:6px; selection-background-color:#cfd5e2; }
+QListWidget { border:none; } QListWidget::item { padding:9px; border-radius:8px; }
+QListWidget::item:selected { background:#1f2430; color:#fff; }
+QHeaderView::section { background:#f3f4f7; border:none; padding:6px; color:#5b6272; }
+QPushButton { background:#f7f8fa; border:1px solid #d3d7df; border-radius:10px; padding:8px 14px; }
+QPushButton:hover { background:#eef1f6; border-color:#9aa3b5; }
+QPushButton#primary { background:#1f2430; color:#fff; border:none; font-weight:600; }
+QPushButton#primary:hover { background:#383f52; }
+QLabel#logo { font-size:17px; font-weight:700; } QLabel#muted { color:#7b8294; }
+"""
+LABEL = {"claude": "Claude", "chatgpt": "ChatGPT"}
+
+
+class Worker(QThread):
+    ok, err, prog, chunk = Signal(object), Signal(str), Signal(str), Signal(str)
+
+    def __init__(self, fn):
+        super().__init__()
+        self.fn = fn
+
+    def run(self):
+        try:
+            self.ok.emit(self.fn(self.prog.emit, self.chunk.emit))
+        except Exception as e:
+            self.err.emit(str(e))
+
+
+def card():
+    f = QFrame()
+    f.setObjectName("card")
+    return f
+
+
+class Win(QMainWindow):
+    def __init__(s):
+        super().__init__()
+        s.setWindowTitle("DuoAI")
+        s.resize(1360, 840)
+        s.cfg, s.proj, s.atts, s.rec, s.w, s.dirty, s.loading = core.get_cfg(), None, [], None, None, False, False
+
+        # header: logo, per-AI status + model switcher + sign in/out
+        hd = card()
+        hl = QHBoxLayout(hd)
+        logo = QLabel("DUO · AI")
+        logo.setObjectName("logo")
+        hl.addWidget(logo)
+        hl.addStretch()
+        s.pv = {}
+        for p in ("claude", "chatgpt"):
+            st, mc, bt = QLabel(), QComboBox(), QPushButton()
+            mc.setEditable(True)
+            mc.setMinimumWidth(200)
+            mc.addItems(core.MODELS[p])
+            mc.setCurrentText(s.cfg[core.MK[p]])
+            mc.currentTextChanged.connect(lambda t, p=p: s.set_model(p, t))
+            bt.clicked.connect(lambda _, p=p: s.toggle_login(p))
+            s.pv[p] = (st, mc, bt)
+            for w in (st, mc, bt):
+                hl.addWidget(w)
+            hl.addSpacing(14)
+        s.sync_login()
+
+        # sidebar
+        s.plist = QListWidget()
+        s.plist.itemClicked.connect(s.open_item)
+        side = card()
+        side.setFixedWidth(220)
+        sl = QVBoxLayout(side)
+        nb = QPushButton("+ New project")
+        nb.clicked.connect(s.new)
+        sl.addWidget(nb)
+        sl.addWidget(s.plist)
+
+        # centre
+        s.view = QTextBrowser()
+        s.view.setOpenExternalLinks(True)
+        s.table = QTableWidget(0, 3)
+        s.table.setHorizontalHeaderLabels(["Task", "Assigned to", "Instructions"])
+        s.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        s.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        s.table.setColumnWidth(1, 130)
+        s.table.setMaximumHeight(170)
+        s.prompt = QPlainTextEdit()
+        s.prompt.setPlaceholderText("Describe what you want built. Both AIs share the work and the memory...")
+        s.prompt.setFixedHeight(84)
+        s.review, s.think, s.code = QCheckBox("Pause to review plan"), QCheckBox("Claude thinking"), QCheckBox("Coding mode")
+        s.review.setChecked(True)
+        s.code.setChecked(s.cfg["coding"])
+        s.code.toggled.connect(lambda v: (s.cfg.update(coding=v), core.set_cfg(s.cfg)))
+        s.lead = QComboBox()
+        s.lead.addItems(["claude", "chatgpt"])
+        s.lead.setCurrentText(s.cfg["lead"])
+        s.lead.currentTextChanged.connect(lambda v: (s.cfg.update(lead=v), core.set_cfg(s.cfg)))
+        s.attlbl, s.status = QLabel(""), QLabel("")
+        s.attlbl.setObjectName("muted")
+        s.status.setObjectName("muted")
+        opts = QHBoxLayout()
+        for w in (s.code, s.think, s.review, QLabel("Lead:"), s.lead, s.attlbl):
+            opts.addWidget(w)
+        opts.addStretch()
+        opts.addWidget(s.status)
+        s.mic = QPushButton("Mic")
+        s.mic.clicked.connect(s.toggle_mic)
+        acts = QHBoxLayout()
+        for text, fn, prim in (("Improve prompt", s.do_improve, 0), ("Attach", s.attach, 0), (None, None, 0),
+                               ("+ Task", lambda: s.add_row(), 0), ("- Task", s.del_row, 0),
+                               ("Plan with lead AI", s.do_plan, 0), ("Run tasks", s.do_run, 1), ("Export code", s.export, 0)):
+            if text is None:
+                acts.addWidget(s.mic)
+                continue
+            b = QPushButton(text)
+            b.clicked.connect(fn)
+            b.setObjectName("primary" if prim else "")
+            acts.addWidget(b)
+        centre = QWidget()
+        cl = QVBoxLayout(centre)
+        cl.setContentsMargins(0, 0, 0, 0)
+        cl.addWidget(s.view, 1)
+        cl.addWidget(s.table)
+        cl.addWidget(s.prompt)
+        cl.addLayout(opts)
+        cl.addLayout(acts)
+
+        # live-synced global memory.md panel
+        mp = card()
+        mp.setFixedWidth(290)
+        ml = QVBoxLayout(mp)
+        ml.addWidget(QLabel("🌐  memory.md  (global, live sync)"))
+        s.memtxt = QPlainTextEdit(core.get_mem())
+        s.memtxt.textChanged.connect(lambda: setattr(s, "dirty", s.dirty or not s.loading))
+        ml.addWidget(s.memtxt)
+        s.memtimer = QTimer(s)
+        s.memtimer.timeout.connect(s.sync_mem)
+        s.memtimer.start(1500)
+
+        root = QWidget()
+        root.setObjectName("root")
+        rl = QVBoxLayout(root)
+        body = QHBoxLayout()
+        for w, f in ((side, 0), (centre, 1), (mp, 0)):
+            body.addWidget(w, f)
+        rl.addWidget(hd)
+        rl.addLayout(body, 1)
+        s.setCentralWidget(root)
+        s.refresh()
+
+    # ---- login / models / memory
+    def sync_login(s):
+        for p, (st, mc, bt) in s.pv.items():
+            on = bool(core.get_key(p))
+            st.setText(f"● {LABEL[p]}")
+            st.setStyleSheet(f"font-weight:600;color:{'#16a34a' if on else '#9aa3b5'};")
+            bt.setText("Sign out" if on else "Sign in")
+
+    def toggle_login(s, p):
+        st, mc, bt = s.pv[p]
+        if core.get_key(p):
+            core.del_key(p)
+        else:
+            key, ok = QInputDialog.getText(s, "Sign in", f"{LABEL[p]} API key:", QLineEdit.Password)
+            if not ok or not key.strip():
+                return
+            core.set_key(p, key.strip())
+            try:
+                ids, cur = core.list_models(p, strict=True), mc.currentText()
+                mc.blockSignals(True)
+                mc.clear()
+                mc.addItems(ids)
+                mc.setCurrentText(cur)
+                mc.blockSignals(False)
+            except Exception as e:
+                core.del_key(p)
+                QMessageBox.warning(s, "Sign in failed", f"Key rejected: {e}")
+        s.sync_login()
+
+    def set_model(s, p, t):
+        if t.strip():
+            s.cfg[core.MK[p]] = t.strip()
+            core.set_cfg(s.cfg)
+
+    def sync_mem(s):
+        disk, cur = core.get_mem(), s.memtxt.toPlainText()
+        if s.dirty:
+            if cur != disk:
+                core.set_mem(cur)
+            s.dirty = False
+        elif disk != cur:
+            s.loading = True
+            s.memtxt.setPlainText(disk)
+            s.loading = False
+
+    # ---- projects
+    def refresh(s):
+        s.plist.clear()
+        for p in core.list_projects():
+            it = QListWidgetItem(p["name"])
+            it.setData(Qt.UserRole, p["id"])
+            s.plist.addItem(it)
+
+    def new(s):
+        name, ok = QInputDialog.getText(s, "New project", "Project name:")
+        if ok and name.strip():
+            s.proj, s.atts = core.new_project(name.strip()), []
+            s.show_proj()
+            s.refresh()
+
+    def open_item(s, it):
+        s.proj = next(p for p in core.list_projects() if p["id"] == it.data(Qt.UserRole))
+        s.atts = []
+        s.show_proj()
+
+    def show_proj(s):
+        s.prompt.setPlainText(s.proj.get("prompt", ""))
+        s.table.setRowCount(0)
+        for t in s.proj["tasks"]:
+            s.add_row(t)
+        s.view.setMarkdown("\n\n---\n\n".join(s.proj["log"]) or f"# {s.proj['name']}\n\nNo results yet.")
+        s.attlbl.setText("")
+
+    def ensure(s):
+        if not s.proj:
+            s.proj = core.new_project(s.prompt.toPlainText().strip()[:40] or "Untitled")
+            s.refresh()
+        s.proj["prompt"] = s.prompt.toPlainText().strip()
+        s.proj["tasks"] = s.read_table()
+        core.save_project(s.proj)
+
+    # ---- task table
+    def add_row(s, t=None):
+        t = t or {"title": "", "assignee": "claude", "instructions": ""}
+        r = s.table.rowCount()
+        s.table.insertRow(r)
+        s.table.setItem(r, 0, QTableWidgetItem(t["title"]))
+        c = QComboBox()
+        c.addItems(["claude", "chatgpt"])
+        c.setCurrentText(t["assignee"])
+        s.table.setCellWidget(r, 1, c)
+        s.table.setItem(r, 2, QTableWidgetItem(t["instructions"]))
+
+    def del_row(s):
+        if s.table.currentRow() >= 0:
+            s.table.removeRow(s.table.currentRow())
+
+    def read_table(s):
+        out = []
+        for r in range(s.table.rowCount()):
+            g = lambda c: s.table.item(r, c).text() if s.table.item(r, c) else ""
+            if g(0).strip():
+                out.append({"title": g(0), "assignee": s.table.cellWidget(r, 1).currentText(),
+                            "instructions": g(2), "output": ""})
+        return out
+
+    # ---- actions
+    def busy(s, fn, done):
+        if s.w and s.w.isRunning():
+            return
+        s.w = Worker(fn)
+        s.w.prog.connect(s.status.setText)
+        s.w.chunk.connect(s.stream)
+        s.w.ok.connect(done)
+        s.w.err.connect(lambda e: (s.status.setText(""), QMessageBox.warning(s, "Error", e)))
+        s.w.start()
+
+    def stream(s, t):
+        s.view.moveCursor(QTextCursor.End)
+        s.view.insertPlainText(t)
+
+    def do_improve(s):
+        if s.prompt.toPlainText().strip():
+            s.status.setText("Improving prompt...")
+            s.busy(lambda cb, ch: core.improve(s.prompt.toPlainText(), s.cfg), s.improved)
+
+    def improved(s, t):
+        s.prompt.setPlainText(t)
+        s.status.setText("Prompt improved - edit if you like.")
+
+    def do_plan(s):
+        if s.prompt.toPlainText().strip():
+            s.ensure()
+            s.status.setText("Planning...")
+            s.busy(lambda cb, ch: core.plan(s.proj["prompt"], s.atts, s.cfg), s.planned)
+
+    def planned(s, tasks):
+        s.table.setRowCount(0)
+        for t in tasks:
+            s.add_row(t)
+        s.status.setText("Plan ready - edit it, then Run tasks." if s.review.isChecked() else "")
+        if not s.review.isChecked():
+            s.do_run()
+
+    def do_run(s):
+        s.ensure()
+        if not s.proj["tasks"]:
+            QMessageBox.information(s, "No tasks", "Add tasks or use 'Plan with lead AI'.")
+            return
+        goal, tasks = s.proj["prompt"], s.proj["tasks"]
+
+        def job(cb, ch):
+            res = core.run_tasks(goal, tasks, s.atts, s.cfg, s.think.isChecked(), cb, ch)
+            cb("Updating memory.md...")
+            try:
+                core.learn(goal, res, s.cfg)
+            except Exception:
+                pass
+            return res
+        s.view.moveCursor(QTextCursor.End)
+        s.busy(job, s.ran)
+
+    def ran(s, tasks):
+        s.proj["log"].append(f"## Request\n{s.proj['prompt']}\n\n" + "\n\n".join(
+            f"### {t['title']} - {t['assignee']}\n\n{t['output']}" for t in tasks))
+        s.proj["tasks"] = tasks
+        core.save_project(s.proj)
+        s.view.setMarkdown("\n\n---\n\n".join(s.proj["log"]))
+        s.status.setText("Done. Memory updated.")
+
+    def export(s):
+        if s.proj:
+            files = core.export_code(s.proj)
+            QMessageBox.information(s, "Export code", "\n".join(files) if files else
+                                    "No files found. (Code blocks need a path=... label; Coding mode adds it.)")
+
+    def attach(s):
+        files, _ = QFileDialog.getOpenFileNames(s, "Attach images, PDFs, Word or code files")
+        s.atts += [core.load_att(f) for f in files]
+        s.attlbl.setText(f"{len(s.atts)} attached")
+
+    def toggle_mic(s):
+        try:
+            if s.rec is None:
+                s.rec = core.Recorder()
+                s.rec.start()
+                s.mic.setText("Stop")
+            else:
+                path, s.rec = s.rec.stop(), None
+                s.mic.setText("Mic")
+                s.status.setText("Transcribing...")
+                s.busy(lambda cb, ch: core.transcribe(path), lambda t: (s.prompt.appendPlainText(t), s.status.setText("")))
+        except Exception as e:
+            s.rec = None
+            s.mic.setText("Mic")
+            QMessageBox.warning(s, "Voice", f"{e}\n\nVoice needs sounddevice and a signed-in ChatGPT key.")
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyleSheet(STYLE)
+    w = Win()
+    w.show()
+    sys.exit(app.exec())

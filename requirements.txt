@@ -1,0 +1,8 @@
+PySide6
+anthropic
+openai
+keyring
+sounddevice
+numpy
+pypdf
+python-docx
