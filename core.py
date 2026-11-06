@@ -1,4 +1,4 @@
-import base64, json, mimetypes, os, re, time, uuid, wave
+import base64, json, mimetypes, os, re, time, uuid, wave, tempfile, threading
 from pathlib import Path
 
 HOME = Path.home() / ".duoai"
@@ -24,7 +24,18 @@ def _load(p, d):
 
 
 def _save(p, o):
-    p.write_text(json.dumps(o, indent=2), "utf-8")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=f".{p.name}.", suffix=".tmp", dir=p.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(o, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, p)
+    except Exception:
+        try: os.unlink(tmp)
+        except OSError: pass
+        raise
 
 
 # ---- config, login ------------------------------------------------------
@@ -39,41 +50,44 @@ def set_cfg(c):
 
 
 def get_key(p):
+    if p not in KN: raise ValueError("Unknown provider")
+    env = {"claude": "ANTHROPIC_API_KEY", "chatgpt": "OPENAI_API_KEY"}[p]
+    if os.environ.get(env): return os.environ[env]
     try:
         import keyring
-        k = keyring.get_password("duoai", KN[p])
-        if k:
-            return k
+        if getattr(keyring.get_keyring(), "priority", 0) <= 0: return None
+        return keyring.get_password("duoai", KN[p])
     except Exception:
-        pass
-    env = {"claude": "ANTHROPIC_API_KEY", "chatgpt": "OPENAI_API_KEY"}[p]
-    return os.environ.get(env) or _load(KEYS, {}).get(KN[p])
+        # Never read API credentials from the legacy plaintext keys.json.
+        return None
 
 
 def set_key(p, v):
+    if p not in KN or not v.strip(): raise ValueError("Enter a non-empty API key.")
     try:
         import keyring
-        keyring.set_password("duoai", KN[p], v)
-    except Exception:
-        k = _load(KEYS, {})
-        k[KN[p]] = v
-        _save(KEYS, k)
-        try:
-            os.chmod(KEYS, 0o600)
-        except Exception:
-            pass
+        if getattr(keyring.get_keyring(), "priority", 0) <= 0:
+            raise RuntimeError("No secure OS credential vault is configured.")
+        keyring.set_password("duoai", KN[p], v.strip())
+    except Exception as e:
+        raise RuntimeError(f"Secure credential storage is unavailable; key was not saved: {e}") from e
+    legacy = _load(KEYS, {})
+    if isinstance(legacy, dict) and KN[p] in legacy:
+        legacy.pop(KN[p], None)
+        if legacy: _save(KEYS, legacy)
+        else: KEYS.unlink(missing_ok=True)
 
 
 def del_key(p):
     try:
         import keyring
         keyring.delete_password("duoai", KN[p])
-    except Exception:
-        pass
-    k = _load(KEYS, {})
-    if k.pop(KN[p], None) is not None:
-        _save(KEYS, k)
-
+    except Exception: pass
+    legacy = _load(KEYS, {})
+    if isinstance(legacy, dict) and KN.get(p) in legacy:
+        legacy.pop(KN[p], None)
+        if legacy: _save(KEYS, legacy)
+        else: KEYS.unlink(missing_ok=True)
 
 def client(p):
     if p == "claude":
@@ -207,16 +221,43 @@ def improve(prompt, cfg):
     return ask(cfg["lead"], sys, prompt, [], cfg).strip()
 
 
+def parse_json_payload(out):
+    candidate = out.strip()
+    fenced = re.search(r"\x60\x60\x60(?:json)?\s*(.*?)\x60\x60\x60", candidate, re.I | re.S)
+    if fenced: candidate = fenced.group(1).strip()
+    decoder = json.JSONDecoder()
+    for i, char in enumerate(candidate):
+        if char in "[{":
+            try: return decoder.raw_decode(candidate[i:])[0]
+            except json.JSONDecodeError: continue
+    raise ValueError("The AI returned invalid JSON. Please retry.")
+
+
+def validate_plan(value):
+    if not isinstance(value, list) or not 2 <= len(value) <= 6:
+        raise ValueError("A valid plan must contain 2–6 tasks.")
+    tasks = []
+    for i, task in enumerate(value, 1):
+        if not isinstance(task, dict): raise ValueError(f"Task {i} is not an object.")
+        title, instructions = task.get("title"), task.get("instructions")
+        assignee = str(task.get("assignee", "")).lower()
+        if not isinstance(title, str) or not title.strip() or len(title) > 160:
+            raise ValueError(f"Task {i} has an invalid title.")
+        if not isinstance(instructions, str) or not instructions.strip() or len(instructions) > 12000:
+            raise ValueError(f"Task {i} has invalid instructions.")
+        if assignee not in ("claude", "chatgpt", "openai", "gpt"):
+            raise ValueError(f"Task {i} has an invalid assignee.")
+        tasks.append({"title": title.strip(), "assignee": "chatgpt" if assignee in ("chatgpt","openai","gpt") else "claude",
+                      "instructions": instructions.strip(), "output": ""})
+    return tasks
+
+
 def plan(goal, atts, cfg):
     sys = system_prompt(cfg) + (
-        '\n\nYou are the lead. Split the request into 2-6 tasks (for software: design, implementation, tests, and a final '
-        'review task given to the AI that did not write the main code). Assign each to "claude" or "chatgpt" by strengths. '
-        'Reply with ONLY a JSON array: [{"title":"...","assignee":"claude|chatgpt","instructions":"..."}]')
-    out = ask(cfg["lead"], sys, goal, atts, cfg)
-    return [{"title": t.get("title", ""), "assignee": "chatgpt" if "gpt" in t.get("assignee", "").lower() else "claude",
-             "instructions": t.get("instructions", ""), "output": ""}
-            for t in json.loads(re.search(r"\[.*\]", out, re.S).group(0))]
-
+        '\n\nYou are the lead. Split the request into 2-6 non-overlapping tasks. Include implementation, tests, '
+        'and independent review where appropriate. Assign each to "claude" or "chatgpt". '
+        'Return ONLY a JSON array of objects with title, assignee, instructions.')
+    return validate_plan(parse_json_payload(ask(cfg["lead"], sys, goal, atts, cfg)))
 
 def run_tasks(goal, tasks, atts, cfg, thinking, cb, ch):
     done = []
@@ -231,16 +272,14 @@ def run_tasks(goal, tasks, atts, cfg, thinking, cb, ch):
     return tasks
 
 
-def learn(goal, tasks, cfg):
-    sys = ('Return ONLY a JSON array of up to 3 short, durable facts or preferences about the user or project worth '
-           'remembering for future work, or []. No duplicates of existing memory:\n' + get_mem())
+def suggest_memory(goal, tasks, cfg):
+    sys = ('Return ONLY a JSON array of up to 3 short, durable, non-sensitive facts or preferences worth '
+           'remembering, or []. Do not duplicate existing memory:\n' + get_mem())
     out = ask(cfg["lead"], sys, f"Request: {goal}\nTasks: " + "; ".join(t["title"] for t in tasks), [], cfg)
-    facts = json.loads(re.search(r"\[.*\]", out, re.S).group(0))
-    if facts:
-        add_mem([str(f) for f in facts])
+    facts = parse_json_payload(out)
+    if not isinstance(facts, list): raise ValueError("Memory suggestions must be a JSON array.")
+    return [str(x).strip()[:300] for x in facts[:3] if isinstance(x, str) and x.strip()]
 
-
-# ---- voice ----------------------------------------------------------------
 class Recorder:
     def start(self):
         import sounddevice as sd
