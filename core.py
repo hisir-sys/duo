@@ -117,7 +117,8 @@ def get_mem():
 
 
 def set_mem(t):
-    MEM.write_text(t, "utf-8")
+    if len(t) > 100000: raise ValueError("Memory is limited to 100 KB.")
+    _save(MEM, t)
 
 
 def add_mem(lines):
@@ -162,6 +163,8 @@ def export_code(p):
 
 # ---- attachments ----------------------------------------------------------
 def load_att(path):
+    if os.path.getsize(path) > 15 * 1024 * 1024:
+        raise ValueError("Attachments are limited to 15 MB.")
     mime = mimetypes.guess_type(path)[0] or "text/plain"
     name = os.path.basename(path)
     if mime.startswith("image/"):
@@ -281,26 +284,54 @@ def suggest_memory(goal, tasks, cfg):
     return [str(x).strip()[:300] for x in facts[:3] if isinstance(x, str) and x.strip()]
 
 class Recorder:
+    MAX_SECONDS = 120
+
+    def __init__(self, max_seconds=120):
+        self.max_seconds = min(self.MAX_SECONDS, max(10, int(max_seconds)))
+        self.chunks, self.frames = [], 0
+        self.lock, self.stopped, self.stream = threading.Lock(), False, None
+
     def start(self):
         import sounddevice as sd
-        self.chunks = []
-        self.stream = sd.InputStream(samplerate=16000, channels=1, dtype="int16",
-                                     callback=lambda d, f, t, s: self.chunks.append(d.copy()))
+        if self.stream is not None: raise RuntimeError("Recording is already active.")
+        def callback(data, frames, _time, _status):
+            with self.lock:
+                if self.stopped: raise sd.CallbackStop
+                remaining = self.max_seconds * 16000 - self.frames
+                if remaining <= 0: raise sd.CallbackStop
+                take = min(frames, remaining)
+                self.chunks.append(data[:take].copy())
+                self.frames += take
+                if take < frames or self.frames >= self.max_seconds * 16000:
+                    raise sd.CallbackStop
+        self.stream = sd.InputStream(samplerate=16000, channels=1, dtype="int16", callback=callback)
         self.stream.start()
 
     def stop(self):
         import numpy as np
-        self.stream.stop()
-        self.stream.close()
-        path = str(HOME / f"rec_{int(time.time())}.wav")
-        with wave.open(path, "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(2)
-            w.setframerate(16000)
-            w.writeframes(np.concatenate(self.chunks).tobytes() if self.chunks else b"")
-        return path
-
+        if self.stream is None: raise RuntimeError("No recording is active.")
+        try: self.stream.stop()
+        finally:
+            self.stream.close()
+            self.stream = None
+        with self.lock:
+            self.stopped = True
+            chunks, self.chunks = self.chunks, []
+        if not chunks: raise RuntimeError("No audio was captured.")
+        fd, path = tempfile.mkstemp(prefix="duo-rec-", suffix=".wav", dir=HOME)
+        os.close(fd)
+        try:
+            with wave.open(path, "wb") as w:
+                w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
+                w.writeframes(np.concatenate(chunks).tobytes())
+            return path
+        except Exception:
+            Path(path).unlink(missing_ok=True)
+            raise
 
 def transcribe(path):
-    with open(path, "rb") as f:
-        return client("chatgpt").audio.transcriptions.create(model="gpt-4o-mini-transcribe", file=f).text
+    try:
+        with open(path, "rb") as f:
+            return client("chatgpt").audio.transcriptions.create(model="gpt-4o-mini-transcribe", file=f).text
+    finally:
+        Path(path).unlink(missing_ok=True)
