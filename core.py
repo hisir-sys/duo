@@ -1,15 +1,16 @@
 import base64, json, mimetypes, os, re, time, uuid, wave, tempfile, threading
 from pathlib import Path
 
+import provider_registry
+
 HOME = Path.home() / ".duoai"
 PROJ, WORK = HOME / "projects", HOME / "workspaces"
 for d in (PROJ, WORK):
     d.mkdir(parents=True, exist_ok=True)
 CFG, MEM, KEYS = HOME / "config.json", HOME / "memory.md", HOME / "keys.json"
-MODELS = {"claude": ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"],
-          "chatgpt": ["gpt-4o", "gpt-4o-mini", "o3"]}
-MK = {"claude": "claude_model", "chatgpt": "openai_model"}
-KN = {"claude": "claude", "chatgpt": "openai"}
+MODELS = {name: list(spec.models) for name, spec in provider_registry.PROVIDERS.items()}
+MK = {name: f"{name}_model" for name in MODELS}
+KN = {name: spec.key_name for name, spec in provider_registry.PROVIDERS.items()}
 CODING = ("You are a principal software engineer. Design before you code, write complete, runnable, "
           "production-quality code with error handling and no placeholders, prefer simple robust solutions, "
           "and add brief tests. Put every file in a fenced block whose info string is `lang path=relative/file.ext`. "
@@ -55,7 +56,8 @@ def _save(p, o):
 
 # ---- config, login ------------------------------------------------------
 def get_cfg():
-    c = {"claude_model": MODELS["claude"][0], "openai_model": MODELS["chatgpt"][0], "lead": "claude", "coding": True}
+    c = {key: models[0] for key, models in MODELS.items()}
+    c.update({"lead": "claude", "coding": True})
     saved = _load(CFG, {})
     if isinstance(saved, dict):
         c.update({k: v for k, v in saved.items() if k in c})
@@ -97,7 +99,7 @@ def migrate_legacy_keys():
 def get_key(p):
     migrate_legacy_keys()
     if p not in KN: raise ValueError("Unknown provider")
-    env = {"claude": "ANTHROPIC_API_KEY", "chatgpt": "OPENAI_API_KEY"}[p]
+    env = provider_registry.get_spec(p).env_name
     if os.environ.get(env): return os.environ[env]
     try:
         import keyring
@@ -139,23 +141,11 @@ def client(p):
     key = get_key(p)
     if not key:
         raise RuntimeError(f"Sign in to {p.title()} first, or set the matching API-key environment variable.")
-    if p == "claude":
-        import anthropic
-        return anthropic.Anthropic(api_key=key, timeout=120, max_retries=2)
-    from openai import OpenAI
-    return OpenAI(api_key=key, timeout=120, max_retries=2)
+    return provider_registry.create_client(p, key, timeout=120, max_retries=2)
 
 
 def list_models(p, strict=False):
-    try:
-        ids = [m.id for m in client(p).models.list().data]
-        if p == "chatgpt":
-            ids = sorted(i for i in ids if i.startswith(("gpt", "o")) and "audio" not in i and "realtime" not in i)
-        return ids or MODELS[p]
-    except Exception:
-        if strict:
-            raise
-        return MODELS[p]
+    return provider_registry.list_models(p, client(p), fallback=not strict)
 
 
 # ---- global memory.md (read on every call, so it is always in sync) ------
