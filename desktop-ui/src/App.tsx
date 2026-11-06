@@ -18,7 +18,7 @@ const agents = [
 ];
 
 function Nav({ icon: Icon, label, active = false, onClick }: any) {
-  return <button className={active ? "nav-item active" : "nav-item"} onClick={onClick} aria-current={active ? "page" : undefined}><Icon size={16}/><span>{label}</span>{!active && <small>Soon</small>}</button>;
+  return <button className={active ? "nav-item active" : "nav-item"} onClick={onClick} aria-current={active ? "page" : undefined}><Icon size={16}/><span>{label}</span>{!onClick && <small>Soon</small>}</button>;
 }
 function Metric({ label, value, note, icon: Icon, warm = false }: any) {
   return <article className={warm ? "metric warm" : "metric"}><div className="metric-head"><span>{label}</span><Icon size={17}/></div><strong>{value}</strong><small>{note}</small></article>;
