@@ -1,0 +1,64 @@
+/* Settings screen layout and local-preview preference controls. */
+.settings-content { max-width:1360px; }
+.settings-welcome { margin-bottom:18px; }
+.settings-layout { display:grid; grid-template-columns:minmax(190px,.62fr) minmax(0,1.8fr); gap:14px; align-items:start; }
+.settings-nav,.settings-panel { min-width:0; border:1px solid var(--border); border-radius:var(--radius); background:var(--glass); box-shadow:var(--shadow); }
+.settings-nav { padding:10px; }
+.settings-nav-title { padding:8px 9px 10px; color:var(--soft); font-size:8px; font-weight:700; letter-spacing:1px; }
+.settings-nav>button { display:flex; align-items:center; width:100%; gap:9px; padding:10px 9px; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--muted); text-align:left; cursor:pointer; }
+.settings-nav>button>svg:first-child { flex:none; color:var(--soft); }
+.settings-nav>button>span { display:flex; min-width:0; flex:1; flex-direction:column; gap:3px; }
+.settings-nav>button b { color:var(--text); font-size:9px; font-weight:600; }
+.settings-nav>button small { color:var(--soft); font-size:8px; }
+.settings-nav>button>svg:last-child { color:var(--soft); }
+.settings-nav>button:hover,.settings-nav>button.selected { border-color:var(--border); background:var(--surface-muted); }
+.settings-nav>button.selected>svg:first-child { color:var(--blue); }
+.settings-panel { padding:20px; }
+.settings-panel-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:19px; }
+.settings-panel-head label { color:var(--soft); font-size:8px; font-weight:700; letter-spacing:1px; }
+.settings-panel-head h2 { margin:6px 0 5px; color:var(--text); font-size:17px; }
+.settings-panel-head p { margin:0; color:var(--muted); font-size:9px; line-height:1.6; }
+.settings-preview-tag { flex:none; padding:5px 7px; border:1px solid var(--border); border-radius:6px; color:var(--blue); font-size:7px; font-weight:700; letter-spacing:.6px; }
+.settings-group { margin-top:17px; padding:15px; border:1px solid var(--border); border-radius:11px; }
+.settings-group h3 { margin:0 0 4px; color:var(--text); font-size:10px; font-weight:650; }
+.settings-group>p { margin:0 0 8px; color:var(--muted); font-size:8px; line-height:1.6; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:12px 0; border-top:1px solid var(--border); }
+.settings-row>div { min-width:0; }
+.settings-row strong { color:var(--text); font-size:9px; font-weight:600; }
+.settings-row p { margin:4px 0 0; color:var(--muted); font-size:8px; line-height:1.5; }
+.settings-switch { position:relative; display:block; flex:none; width:34px; height:19px; padding:2px; border:1px solid var(--border); border-radius:20px; background:var(--surface-muted); cursor:pointer; transition:background .16s,border-color .16s; }
+.settings-switch i { display:block; width:13px; height:13px; border-radius:50%; background:var(--soft); transition:transform .16s,background .16s; }
+.settings-switch.enabled { border-color:var(--blue); background:var(--blue); }
+.settings-switch.enabled i { transform:translateX(15px); background:white; }
+.settings-switch:focus-visible,.settings-nav button:focus-visible,.theme-choices button:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.theme-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.theme-choices button { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; padding:9px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); text-align:left; cursor:pointer; }
+.theme-choices button.chosen { border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-soft); }
+.theme-choices button>b { font-size:9px; }
+.theme-choices button>svg { color:var(--blue); }
+.theme-swatch { grid-column:1/-1; display:flex; flex-direction:column; gap:5px; height:64px; padding:9px; border:1px solid var(--border); border-radius:7px; }
+.theme-swatch i { display:block; width:65%; height:7px; border-radius:4px; background:#dbe3ee; }
+.theme-swatch i:nth-child(2) { width:90%; height:17px; background:#eef1f6; }
+.theme-swatch i:nth-child(3) { width:45%; background:#9aacc4; }
+.light-swatch { background:#fafbfd; }
+.dark-swatch { background:#151c27; }
+.dark-swatch i { background:#52647d; }
+.dark-swatch i:nth-child(2) { background:#273447; }
+.dark-swatch i:nth-child(3) { background:#8298b7; }
+.settings-note { margin-top:12px; padding:10px 11px; border-radius:8px; background:var(--surface-muted); color:var(--muted); font-size:8px; line-height:1.6; }
+.settings-profile { display:flex; align-items:center; gap:11px; padding:14px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.settings-profile>span { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:var(--blue-soft); color:var(--blue); font-weight:700; }
+.settings-profile>div { display:flex; flex-direction:column; gap:4px; }
+.settings-profile strong { color:var(--text); font-size:10px; }
+.settings-profile small,.settings-info small { color:var(--soft); font-size:8px; }
+.settings-info { display:flex; flex-direction:column; gap:6px; padding:13px 0; border-bottom:1px solid var(--border); }
+.settings-info label { color:var(--soft); font-size:8px; font-weight:700; letter-spacing:.8px; }
+.settings-info strong { color:var(--text); font-size:9px; font-weight:600; }
+.settings-security-card { display:flex; gap:11px; margin-top:15px; padding:13px; border:1px solid var(--border); border-radius:10px; background:var(--surface-muted); }
+.settings-security-card>svg { flex:none; color:var(--blue); }
+.settings-security-card strong { color:var(--text); font-size:9px; }
+.settings-security-card p { margin:5px 0; color:var(--muted); font-size:8px; line-height:1.6; }
+.settings-security-card small { color:var(--soft); font-size:8px; }
+@media(max-width:760px) { .settings-layout { grid-template-columns:1fr; } .settings-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px; } .settings-nav-title { grid-column:1/-1; } .settings-nav>button { padding:9px 7px; } .settings-nav>button small { display:none; } }
+@media(max-width:480px) { .settings-panel { padding:14px; } .settings-nav { grid-template-columns:1fr; } .theme-choices { gap:7px; } }
+@media(prefers-reduced-motion:reduce) { .settings-switch,.settings-switch i { transition:none; } }
