@@ -123,6 +123,12 @@ def _save_artifacts(output: str, workspace: Path) -> tuple[str, ...]:
             raise ValueError(f"Worker returned more than {MAX_ARTIFACTS} proposed files.")
         relative = match.group(1).strip("\"'")
         content = match.group(2)
+        # The newline immediately before a Markdown closing fence is a delimiter,
+        # not part of the proposed file contents.
+        if content.endswith("\r\n"):
+            content = content[:-2]
+        elif content.endswith("\n"):
+            content = content[:-1]
         if len(content) > MAX_ARTIFACT_CHARS:
             raise ValueError("A proposed file exceeds the 1 MB limit.")
         total += len(content)
