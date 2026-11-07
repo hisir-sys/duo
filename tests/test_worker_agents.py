@@ -25,7 +25,7 @@ def test_team_uses_separate_workspaces_and_saves_coding_proposals(tmp_path):
     calls = []
     def ask(provider, system, prompt, attachments, cfg):
         calls.append((provider, system, prompt))
-        if "Coding Agent" in system:
+        if "You are the Coding Agent." in system:
             return "Proposed file:\n```python path=src/example.py\nprint('proposal')\n```"
         return "Independent review complete."
 
