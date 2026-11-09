@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, ArrowRight, Clock3, FileCode2, FileText, Folder, ChevronRight, Plus, Play, Terminal, CircleCheck, CircleDashed, AlertTriangle, MessageSquare, FileDiff, GitCommit } from "lucide-react";
+import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, ArrowRight, Clock3, FileCode2, FileText, Folder, ChevronRight, Plus, Play, Terminal, CircleCheck, CircleDashed, AlertTriangle, MessageSquare, FileDiff, GitCommit, KeyRound, RefreshCw, LoaderCircle, LockKeyhole } from "lucide-react";
 
 
 const updates = [
@@ -294,11 +294,64 @@ function ProjectsScreen({ query, onOpenWorkspace }: { query:string; onOpenWorksp
 }
 
 
+
+type ProviderInfo = { id:string; label:string; connected:boolean; model:string; models:string[]; master:boolean };
+function ProviderSettings() {
+  const [providers,setProviders]=useState<ProviderInfo[]>([]);
+  const [master,setMaster]=useState("gemini");
+  const [selected,setSelected]=useState("gemini");
+  const [apiKey,setApiKey]=useState("");
+  const [model,setModel]=useState("");
+  const [busy,setBusy]=useState("");
+  const [message,setMessage]=useState("");
+  const [error,setError]=useState("");
+  const active=providers.find(item=>item.id===selected);
+  const refresh=async()=>{
+    const data=await window.duoDesktop.backend.invoke("providers.list");
+    setProviders(data.providers);
+    setMaster(data.master_provider);
+    const current=data.providers.find((item:ProviderInfo)=>item.id===selected)??data.providers[0];
+    if(current)setModel(current.model);
+  };
+  useEffect(()=>{refresh().catch(e=>setError(e.message));},[]);
+  useEffect(()=>{if(active)setModel(active.model);},[selected]);
+  const save=async()=>{
+    setBusy("save");setError("");setMessage("");
+    try{const data=await window.duoDesktop.backend.invoke("providers.save",{provider:selected,api_key:apiKey,model,make_master:master===selected});setProviders(data.providers);setMaster(data.master_provider);setApiKey("");setMessage("Saved securely in the operating system credential vault.");}
+    catch(e){setError((e as Error).message);}finally{setBusy("");}
+  };
+  const test=async()=>{
+    setBusy("test");setError("");setMessage("");
+    try{const data=await window.duoDesktop.backend.invoke("providers.test",{provider:selected});setProviders(old=>old.map(item=>item.id===selected?{...item,connected:true,models:data.models}:item));setMessage("Connection verified · "+data.models.length+" models available.");}
+    catch(e){setError((e as Error).message);}finally{setBusy("");}
+  };
+  const remove=async()=>{
+    setBusy("remove");setError("");setMessage("");
+    try{const data=await window.duoDesktop.backend.invoke("providers.remove",{provider:selected});setProviders(data.providers);setApiKey("");setMessage("Provider key removed from the credential vault.");}
+    catch(e){setError((e as Error).message);}finally{setBusy("");}
+  };
+  return <><div className="settings-panel-head"><div><label>OFFICIAL PROVIDER CONNECTIONS</label><h2>AI providers</h2><p>Credentials are stored by Python in your operating system’s secure credential vault.</p></div><span className="settings-preview-tag">PYTHON CORE</span></div>
+    <div className="provider-settings-layout">
+      <div className="provider-picker">{providers.map(item=><button key={item.id} className={selected===item.id?"provider-choice selected":"provider-choice"} onClick={()=>{setSelected(item.id);setMessage("");setError("");}}><span className="provider-choice-mark">{item.label.slice(0,1)}</span><span><b>{item.label}</b><small>{item.connected?"Connected":"Not connected"}</small></span><i className={item.connected?"connected":""}/></button>)}</div>
+      <div className="provider-editor">
+        {active&&<><div className="provider-editor-title"><div><span className="provider-live-dot" data-connected={active.connected}/><b>{active.label}</b></div><small>{active.connected?"CREDENTIAL SAVED":"SETUP REQUIRED"}</small></div>
+          <label className="provider-field-label">MODEL</label><select value={model} onChange={e=>setModel(e.target.value)}>{(active.models||[]).map(item=><option key={item} value={item}>{item}</option>)}</select>
+          <label className="provider-field-label">API KEY <span>OPTIONAL IF ALREADY SAVED</span></label><input type="password" autoComplete="off" spellCheck={false} placeholder={active.connected?"Enter a new key to replace the saved one":"Paste your provider API key"} value={apiKey} onChange={e=>setApiKey(e.target.value)}/>
+          <label className="provider-master-toggle"><input type="radio" checked={master===selected} onChange={()=>setMaster(selected)}/> Use this provider for Master Orchestrator</label>
+          <div className="provider-actions"><button onClick={save} disabled={!!busy||!model.trim()}>{busy==="save"?<LoaderCircle size={14} className="spin"/>:<LockKeyhole size={14}/>} Save securely</button><button onClick={test} disabled={!!busy||!active.connected}><RefreshCw size={14} className={busy==="test"?"spin":""}/> Test connection</button>{active.connected&&<button className="provider-remove" onClick={remove} disabled={!!busy}>Remove key</button>}</div>
+          {message&&<p className="provider-feedback success"><Check size={14}/>{message}</p>}{error&&<p className="provider-feedback error">{error}</p>}
+          <p className="provider-security-note"><ShieldCheck size={14}/> Keys are never returned to the renderer, written to local storage, or included in logs.</p>
+        </>}
+      </div>
+    </div>
+  </>;
+}
+
 function SettingsScreen({ query, theme, onThemeChange, lowEffects, onLowEffectsChange }: { query:string; theme:"light"|"dark"; onThemeChange:(value:"light"|"dark")=>void; lowEffects:boolean; onLowEffectsChange:(value:boolean)=>void }) {
   const [section,setSection]=useState("Appearance");
   const [notifications,setNotifications]=useState({reviews:true,agentUpdates:true,projectActivity:false,weeklySummary:true});
   const [privacy,setPrivacy]=useState({localHistory:true,diagnostics:false});
-  const sections=[{name:"Profile",icon:Users,description:"Your workspace identity"},{name:"Appearance",icon:Sparkles,description:"Theme and motion"},{name:"Notifications",icon:Bell,description:"Choose what appears"},{name:"Privacy & security",icon:ShieldCheck,description:"Local data and diagnostics"},{name:"Workspace",icon:FolderKanban,description:"Workspace preferences"}];
+  const sections=[{name:"Profile",icon:Users,description:"Your workspace identity"},{name:"Appearance",icon:Sparkles,description:"Theme and motion"},{name:"AI providers",icon:KeyRound,description:"Secure API connections"},{name:"Notifications",icon:Bell,description:"Choose what appears"},{name:"Privacy & security",icon:ShieldCheck,description:"Local data and diagnostics"},{name:"Workspace",icon:FolderKanban,description:"Workspace preferences"}];
   const visibleSections=sections.filter(item=>(item.name+" "+item.description).toLowerCase().includes(query.toLowerCase()));
   const toggle=(group:"notifications"|"privacy",key:string,value:boolean)=> {
     if(group==="notifications") setNotifications(old=>({...old,[key]:value}));
@@ -312,6 +365,7 @@ function SettingsScreen({ query, theme, onThemeChange, lowEffects, onLowEffectsC
       <aside className="settings-nav"><div className="settings-nav-title">SETTINGS</div>{visibleSections.map(item=><button key={item.name} className={section===item.name?"selected":""} onClick={()=>setSection(item.name)}><item.icon size={16}/><span><b>{item.name}</b><small>{item.description}</small></span><ChevronRight size={14}/></button>)}</aside>
       <section className="settings-panel">
         {section==="Profile"&&<><div className="settings-panel-head"><div><label>YOUR PROFILE</label><h2>Personal workspace</h2><p>Basic identity shown in this local preview.</p></div><span className="settings-preview-tag">PREVIEW</span></div><div className="settings-profile"><span>S</span><div><strong>Studio owner</strong><small>Local preview account</small></div></div><div className="settings-info"><label>DISPLAY NAME</label><strong>Studio owner</strong><small>Profile editing and account sync are not connected yet.</small></div><div className="settings-info"><label>WORKSPACE</label><strong>Personal workspace</strong><small>Free workspace · sample information</small></div></>}
+        {section==="AI providers"&&<ProviderSettings/>}
         {section==="Appearance"&&<><div className="settings-panel-head"><div><label>DISPLAY</label><h2>Appearance</h2><p>Choose a comfortable look for your workspace.</p></div><span className="settings-preview-tag">ACTIVE PREVIEW</span></div><div className="settings-group"><h3>Theme</h3><p>Switch between light and dark appearance.</p><div className="theme-choices"><button className={theme==="light"?"chosen":""} onClick={()=>onThemeChange("light")}><span className="theme-swatch light-swatch"><i/><i/><i/></span><b>Light</b>{theme==="light"&&<Check size={14}/>}</button><button className={theme==="dark"?"chosen":""} onClick={()=>onThemeChange("dark")}><span className="theme-swatch dark-swatch"><i/><i/><i/></span><b>Dark</b>{theme==="dark"&&<Check size={14}/>}</button></div></div><div className="settings-group"><h3>Motion and effects</h3><p>Reduce decorative movement and transitions.</p><Row title="Low effects mode" description="Use calmer transitions and reduce visual effects." checked={lowEffects} onChange={onLowEffectsChange}/><div className="settings-note">The operating system’s reduced-motion preference is also respected where supported.</div></div></>}
         {section==="Notifications"&&<><div className="settings-panel-head"><div><label>UPDATES</label><h2>Notifications</h2><p>Choose which preview notifications you would like to see.</p></div><span className="settings-preview-tag">LOCAL ONLY</span></div><div className="settings-group"><h3>Activity notifications</h3><Row title="Review requests" description="When a proposal is ready for your review." checked={notifications.reviews} onChange={v=>toggle("notifications","reviews",v)}/><Row title="Agent updates" description="When an agent reports a task update." checked={notifications.agentUpdates} onChange={v=>toggle("notifications","agentUpdates",v)}/><Row title="Project activity" description="General progress and project updates." checked={notifications.projectActivity} onChange={v=>toggle("notifications","projectActivity",v)}/><Row title="Weekly summary" description="A compact overview of workspace activity." checked={notifications.weeklySummary} onChange={v=>toggle("notifications","weeklySummary",v)}/></div><div className="settings-note">These switches currently change this screen only. System notifications are not connected.</div></>}
         {section==="Privacy & security"&&<><div className="settings-panel-head"><div><label>DATA CONTROLS</label><h2>Privacy & security</h2><p>Review the privacy-related options planned for the desktop app.</p></div><span className="settings-preview-tag">PREVIEW</span></div><div className="settings-group"><h3>Local data preferences</h3><Row title="Keep local activity history" description="Preference preview for keeping recent activity on this device." checked={privacy.localHistory} onChange={v=>toggle("privacy","localHistory",v)}/><Row title="Share anonymous diagnostics" description="Preference preview only; no diagnostic data is sent." checked={privacy.diagnostics} onChange={v=>toggle("privacy","diagnostics",v)}/></div><div className="settings-security-card"><ShieldCheck size={18}/><div><strong>Credential protection</strong><p>Provider credentials remain managed by the existing Python backend. This UI preview does not read, display, or change secrets.</p><small>Backend connection pending</small></div></div></>}
@@ -325,11 +379,19 @@ function SettingsScreen({ query, theme, onThemeChange, lowEffects, onLowEffectsC
 export default function App() {
   const [query, setQuery] = useState("");
   const [low, setLow] = useState(false);
+  const [backendStatus,setBackendStatus]=useState<"checking"|"online"|"offline">("checking");
   const [page, setPage] = useState<"Home" | "Projects" | "Agents" | "Master Control Room" | "Workspace" | "Review Center" | "Settings">("Home");
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("duoai-theme");
     return saved === "dark" ? "dark" : "light";
   });
+  useEffect(() => {
+    let active=true;
+    const ping=()=>window.duoDesktop.backend.invoke("health").then(()=>{if(active)setBackendStatus("online");}).catch(()=>{if(active)setBackendStatus("offline");});
+    ping();
+    const timer=window.setInterval(ping,15000);
+    return ()=>{active=false;window.clearInterval(timer);};
+  }, []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("duoai-theme", theme);
@@ -369,7 +431,7 @@ export default function App() {
       </div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className={"bridge "+backendStatus}><i/>{backendStatus==="online"?"Python core connected":backendStatus==="checking"?"Connecting to Python…":"Python core offline"}</span><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
       {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content editorial-dashboard">
           <section className="dashboard-heading">
             <div>
@@ -377,7 +439,7 @@ export default function App() {
               <h1>A clearer view of<br/><em>what’s moving.</em></h1>
               <p>Projects, agent roles and review work — brought together in one considered workspace.</p>
             </div>
-            <div className="dashboard-heading-side"><span className="sample-pill">SAMPLE WORKSPACE DATA</span><small>Preview environment<br/>Python bridge not connected</small></div>
+            <div className="dashboard-heading-side"><span className="sample-pill">SAMPLE WORKSPACE DATA</span><small>Preview metrics remain labelled<br/>{backendStatus==="online"?"Python core connected":"Waiting for Python core"}</small></div>
           </section>
 
           <section className="dashboard-kpis" aria-label="Workspace metrics">
