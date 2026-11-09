@@ -525,3 +525,16 @@ main {
 .master-workers .workflow-node { min-height:68px; cursor:default; }
 :root[data-theme="dark"] .master-console,:root[data-theme="dark"] .master-plan-panel,:root[data-theme="dark"] .master-run-panel { background:rgba(255,255,255,.025); box-shadow:0 10px 30px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.035); }
 @media(max-width:760px) { .master-stage { grid-template-columns:1fr; gap:5px; } .master-stage-label { padding-top:0; } .master-workers { grid-template-columns:1fr; } .master-console-actions { align-items:flex-start; flex-direction:column; } }
+
+.projects-create { display:flex; align-items:center; gap:7px; }
+.projects-create input { width:min(260px,35vw); height:34px; padding:0 10px; border:1px solid var(--border); border-radius:9px; outline:none; background:var(--surface); color:var(--text); font:inherit; font-size:10px; }
+.projects-create input:focus { border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
+.projects-create button { display:flex; align-items:center; gap:6px; height:34px; padding:0 10px; border:1px solid var(--text-strong); border-radius:9px; background:var(--text-strong); color:var(--surface); font-size:9px; font-weight:650; cursor:pointer; }
+.projects-create button:disabled { opacity:.45; cursor:not-allowed; }
+.projects-error { color:#b16d62; font-size:10px; }
+.projects-connection { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:9px; }
+.projects-summary { grid-template-columns:repeat(3,minmax(0,1fr)) auto; }
+.projects-toolbar { justify-content:space-between; }
+.project-card-stack { overflow-wrap:anywhere; }
+:root[data-theme="dark"] .projects-create input { background:rgba(255,255,255,.035); }
+@media(max-width:760px) { .projects-create { width:100%; } .projects-create input { width:100%; } .projects-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
