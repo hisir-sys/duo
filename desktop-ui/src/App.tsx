@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, Gauge, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, ArrowRight, Clock3, FileCode2, FileText, Folder, ChevronRight, Plus, Play, Terminal, CircleCheck, CircleDashed, AlertTriangle, MessageSquare, FileDiff, GitCommit } from "lucide-react";
-import { AgentOrb } from "./AgentOrb";
+
 
 const updates = [
   ["OR", "Orchestrator prepared a project plan", "Website refresh · 8 minutes ago", "Planning"],
@@ -352,68 +352,90 @@ export default function App() {
       <div className="side-bottom"><div className="profile"><span>S</span><div><b>Studio owner</b><small>Local preview</small></div></div></div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Settings" ? "Search settings..." : page === "Projects" ? "Search projects..." : page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Settings" ? "Search settings..." : page === "Projects" ? "Search projects..." : page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
       {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content home-redesign">
-        <section className="home-intro">
-          <div><span className="home-kicker">DUOAI STUDIO <i/> PERSONAL WORKSPACE</span><h1>Your work,<br/><em>in good hands.</em></h1><p>A clear place to plan projects, coordinate specialist agents and review the work they prepare.</p></div>
-          <div className="home-intro-meta"><span className="home-status-dot"/><span>Local preview</span><b>·</b><span>Backend bridge pending</span></div>
-        </section>
-        <section className="home-hero">
-          <div className="home-hero-copy">
-            <span className="home-section-index">01 / WORKSPACE</span>
-            <h2>Make progress<br/><em>visible.</em></h2>
-            <p>Pick up where you left off. Your projects, plans and reviews stay together, with the orchestrator designed to coordinate the moving parts.</p>
-            <div className="home-hero-actions">
-              <button className="home-primary" onClick={()=>setPage("Workspace")}>Open workspace <ArrowRight size={16}/></button>
-              <button className="home-secondary" onClick={()=>setPage("Master Control Room")}>View orchestration <ArrowUpRight size={15}/></button>
+        <div className="content editorial-dashboard">
+          <section className="dashboard-heading">
+            <div>
+              <span className="eyebrow"><i/> DUO STUDIO / WORKSPACE OVERVIEW</span>
+              <h1>A clearer view of<br/><em>what’s moving.</em></h1>
+              <p>Projects, agent roles and review work — brought together in one considered workspace.</p>
             </div>
-            <div className="home-hero-foot"><span><CircleDot size={13}/> Preview environment</span><span>Python services connect in a later stage</span></div>
-          </div>
-          <div className="home-hero-art">
-            <div className="home-art-grid"/>
-            <div className="home-orb-stage"><AgentOrb/></div>
-            <div className="home-orb-label"><span>DUO / 01</span><b>Orchestration core</b><small>Concept visual · not a live process</small></div>
-            <div className="home-art-stamp">PLAN<br/>BUILD<br/>REVIEW</div>
-          </div>
-        </section>
-        <section className="home-metrics" aria-label="Workspace summary">
-          <article><span>ACTIVE PROJECTS</span><strong>04</strong><small><FolderKanban size={13}/> Across your workspace</small></article>
-          <article><span>TASKS IN PROGRESS</span><strong>12</strong><small><Activity size={13}/> Across 4 projects</small></article>
-          <article><span>REVIEWS WAITING</span><strong>03</strong><small><GitPullRequest size={13}/> Ready for attention</small></article>
-          <article className="home-completion"><span>COMPLETION RATE</span><strong>78<small>%</small></strong><div className="home-meter"><i/></div><small>Sample project activity</small></article>
-        </section>
-        <section className="home-work-grid">
-          <article className="home-projects-panel">
-            <header className="home-panel-heading"><div><span className="home-section-index">02 / IN MOTION</span><h2>Active projects</h2><p>Recent work across your workspace.</p></div><button onClick={()=>setPage("Projects")}>All projects <ArrowUpRight size={14}/></button></header>
-            <div className="home-project-list">
-              <button className="home-project-row" onClick={()=>setPage("Workspace")}><span className="home-project-mark mark-sage">DE</span><span className="home-project-info"><b>Desktop experience refresh</b><small>React · TypeScript <i/> Updated a few minutes ago</small><span className="home-project-track"><i style={{width:"68%"}}/></span></span><span className="home-project-progress"><b>68%</b><small>5 / 8 tasks</small></span><ArrowUpRight size={16}/></button>
-              <button className="home-project-row" onClick={()=>setPage("Projects")}><span className="home-project-mark mark-amber">AI</span><span className="home-project-info"><b>API integration</b><small>Python · FastAPI <i/> Provider configuration</small><span className="home-project-track"><i style={{width:"42%"}}/></span></span><span className="home-project-progress"><b>42%</b><small>3 / 7 tasks</small></span><ArrowUpRight size={16}/></button>
-              <button className="home-project-row" onClick={()=>setPage("Projects")}><span className="home-project-mark mark-blue">WR</span><span className="home-project-info"><b>Website refresh</b><small>React · Vite <i/> Updated earlier today</small><span className="home-project-track"><i style={{width:"84%"}}/></span></span><span className="home-project-progress"><b>84%</b><small>8 / 10 tasks</small></span><ArrowUpRight size={16}/></button>
+            <div className="dashboard-heading-side"><span className="sample-pill">SAMPLE WORKSPACE DATA</span><small>Preview environment<br/>Python bridge not connected</small></div>
+          </section>
+
+          <section className="dashboard-kpis" aria-label="Workspace metrics">
+            <article className="kpi-card"><span>PROJECTS</span><strong>04</strong><small><i className="kpi-dot sage"/> 3 shown below</small><span className="kpi-index">01</span></article>
+            <article className="kpi-card"><span>OPEN TASKS</span><strong>12</strong><small><i className="kpi-dot blue"/> Across 4 projects</small><span className="kpi-index">02</span></article>
+            <article className="kpi-card"><span>IN REVIEW</span><strong>03</strong><small><i className="kpi-dot amber"/> Awaiting attention</small><span className="kpi-index">03</span></article>
+            <article className="kpi-card kpi-progress"><span>COMPLETION</span><strong>78<small>%</small></strong><div className="kpi-track"><i/></div><small>Illustrative project average</small><span className="kpi-index">04</span></article>
+          </section>
+
+          <section className="dashboard-main-grid">
+            <article className="editorial-panel project-board">
+              <header className="editorial-panel-head"><div><span className="section-kicker">01 — CURRENT WORK</span><h2>Projects in motion</h2><p>A snapshot of the work currently represented in this preview.</p></div><button onClick={()=>setPage("Projects")}>Browse projects <ArrowUpRight size={15}/></button></header>
+              <div className="project-board-list">
+                <button className="project-board-row" onClick={()=>setPage("Workspace")}><span className="project-monogram monogram-sage">DE</span><span className="project-board-copy"><b>Desktop experience refresh</b><small>React · TypeScript <i/> 5 of 8 tasks</small><span className="project-board-track"><i style={{width:"68%"}}/></span></span><span className="project-board-value">68%</span><ArrowUpRight size={15}/></button>
+                <button className="project-board-row" onClick={()=>setPage("Projects")}><span className="project-monogram monogram-clay">AI</span><span className="project-board-copy"><b>API integration</b><small>Python · FastAPI <i/> 3 of 7 tasks</small><span className="project-board-track"><i style={{width:"42%"}}/></span></span><span className="project-board-value">42%</span><ArrowUpRight size={15}/></button>
+                <button className="project-board-row" onClick={()=>setPage("Projects")}><span className="project-monogram monogram-blue">WR</span><span className="project-board-copy"><b>Website refresh</b><small>React · Vite <i/> 8 of 10 tasks</small><span className="project-board-track"><i style={{width:"84%"}}/></span></span><span className="project-board-value">84%</span><ArrowUpRight size={15}/></button>
+              </div>
+              <footer className="editorial-panel-foot"><span><i className="kpi-dot sage"/> Example project records</span><span>Open a row to explore the UI preview</span></footer>
+            </article>
+
+            <article className="editorial-panel throughput-panel">
+              <header className="editorial-panel-head"><div><span className="section-kicker">02 — DELIVERY RHYTHM</span><h2>Task throughput</h2><p>Illustrative completed tasks by day.</p></div><span className="chart-period">7 DAYS</span></header>
+              <div className="throughput-summary"><strong>24</strong><span>sample completions<br/><b>+18% vs. prior period</b></span></div>
+              <div className="throughput-chart" role="img" aria-label="Illustrative task throughput line chart over seven days">
+                <div className="chart-y-labels"><span>12</span><span>8</span><span>4</span><span>0</span></div>
+                <svg viewBox="0 0 440 156" preserveAspectRatio="none" aria-hidden="true">
+                  <defs><linearGradient id="throughputFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#8b9d82" stopOpacity=".25"/><stop offset="100%" stopColor="#8b9d82" stopOpacity="0"/></linearGradient></defs>
+                  <path className="chart-gridline" d="M0 18H440 M0 57H440 M0 96H440 M0 135H440"/>
+                  <path className="chart-area" d="M0 112 C24 103 35 83 73 91 S125 104 146 76 S199 83 220 61 S272 72 293 51 S345 60 366 34 S414 42 440 18 L440 135 L0 135Z"/>
+                  <path className="chart-line" d="M0 112 C24 103 35 83 73 91 S125 104 146 76 S199 83 220 61 S272 72 293 51 S345 60 366 34 S414 42 440 18"/>
+                  <circle className="chart-point" cx="440" cy="18" r="4"/>
+                </svg>
+                <div className="chart-x-labels"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div>
+              </div>
+              <div className="chart-legend"><span><i/> Completed tasks</span><small>Illustrative series · not live telemetry</small></div>
+            </article>
+          </section>
+
+          <section className="dashboard-lower-grid">
+            <article className="editorial-panel topology-panel">
+              <header className="editorial-panel-head"><div><span className="section-kicker">03 — SYSTEM MAP</span><h2>Coordination topology</h2><p>How a request is intended to move through specialist roles.</p></div><button onClick={()=>setPage("Master Control Room")}>Inspect workflow <ArrowUpRight size={15}/></button></header>
+              <div className="topology-canvas" role="img" aria-label="Conceptual task routing from the master orchestrator to coding, testing, review and research roles">
+                <svg className="topology-lines" viewBox="0 0 600 230" preserveAspectRatio="none" aria-hidden="true"><path d="M300 72 V104 M300 104 H82 V137 M300 104 H218 V137 M300 104 H382 V137 M300 104 H518 V137"/></svg>
+                <div className="topology-master"><span className="topology-node-mark">M</span><span><b>Master Orchestrator</b><small>Plan · Prioritise · Delegate</small></span><em>COORDINATOR</em></div>
+                <div className="topology-workers">
+                  <div className="topology-worker"><span className="worker-symbol sage-symbol">01</span><b>Coding</b><small>Implementation</small></div>
+                  <div className="topology-worker"><span className="worker-symbol blue-symbol">02</span><b>Testing</b><small>Verification</small></div>
+                  <div className="topology-worker"><span className="worker-symbol clay-symbol">03</span><b>Review</b><small>Quality check</small></div>
+                  <div className="topology-worker"><span className="worker-symbol ink-symbol">04</span><b>Research</b><small>Technical context</small></div>
+                </div>
+              </div>
+              <footer className="editorial-panel-foot"><span>Conceptual agent routing</span><span>Not a live neural-network or execution trace</span></footer>
+            </article>
+
+            <div className="dashboard-side-stack">
+              <article className="editorial-panel review-spotlight">
+                <span className="section-kicker">04 — NEEDS ATTENTION</span><div className="review-spotlight-count">03</div><h3>Reviews waiting</h3><p>Proposed changes are ready for a closer look in the review workspace.</p><button onClick={()=>setPage("Review Center")}>Open review centre <ArrowUpRight size={15}/></button>
+              </article>
+              <article className="editorial-panel provider-panel">
+                <header className="editorial-panel-head"><div><span className="section-kicker">05 — PROVIDER LAYER</span><h2>Provider setup</h2></div><span className="setup-state">NOT CONNECTED</span></header>
+                <div className="provider-row"><span className="provider-monogram">G</span><span><b>Gemini</b><small>Master provider · planned</small></span><em>Pending</em></div>
+                <div className="provider-row"><span className="provider-monogram">M</span><span><b>Mistral</b><small>Coding workers · planned</small></span><em>Pending</em></div>
+                <div className="provider-row"><span className="provider-monogram">G</span><span><b>Groq</b><small>Fast workers · planned</small></span><em>Pending</em></div>
+                <footer className="editorial-panel-foot"><span>Provider roles from the project plan</span><span>No keys are read here</span></footer>
+              </article>
             </div>
-            <footer className="home-project-footer"><span><span className="home-status-dot"/> Sample project data</span><span>Project actions are preview navigation only</span></footer>
-          </article>
-          <aside className="home-side-stack">
-            <section className="home-orchestrator-card">
-              <div className="home-card-top"><span className="home-section-index">03 / TEAM</span><span className="home-tag">PREVIEW</span></div>
-              <div className="home-orchestrator-title"><div><h2>One coordinator.<br/>Specialist workers.</h2><p>See how the agent roles fit together.</p></div><span className="home-mini-orb"><AgentOrb compact/></span></div>
-              <button onClick={()=>setPage("Agents")}>Explore agent profiles <ArrowRight size={14}/></button>
-            </section>
-            <section className="home-queue-card">
-              <div className="home-card-top"><span className="home-section-index">04 / REVIEW</span><GitPullRequest size={16}/></div>
-              <div className="home-queue-number">03</div><h3>Changes waiting for a second look.</h3><p>Review proposals and inspect their findings before approval.</p>
-              <button onClick={()=>setPage("Review Center")}>Open review center <ArrowUpRight size={14}/></button>
-            </section>
-          </aside>
-        </section>
-        <section className="home-lower-grid">
-          <article className="home-activity-panel">
-            <header className="home-panel-heading"><div><span className="home-section-index">05 / RECENT SIGNAL</span><h2>Activity</h2></div><span className="home-sample-note">Sample timeline</span></header>
-            <div className="home-activity-list">{visible.slice(0,4).map((row,i)=><div className="home-activity-row" key={row[0]}><span className="home-activity-avatar">{row[0]}</span><div><b>{row[1]}</b><small>{row[2]}</small></div><em>{row[3]}</em><span className="home-activity-line">{i===0?"NOW":i===1?"24M":"1H"}</span></div>)}{!visible.length&&<p className="empty">No sample activity matches that search.</p>}</div>
-          </article>
-          <aside className="home-bridge-panel"><span className="home-section-index">SYSTEM STATUS</span><div className="home-bridge-indicator"><span/><b>Desktop preview running</b></div><p>The interface is running in Electron. The Python backend and live agent execution are not connected to this screen yet.</p><div className="home-bridge-meta"><span>UI SHELL <b>READY</b></span><span>PYTHON BRIDGE <b>PENDING</b></span></div><button onClick={()=>setPage("Settings")}>Workspace settings <ArrowUpRight size={14}/></button></aside>
-        </section>
-        <footer className="page-foot"><span>DuoAI Studio · Workspace</span><span>Sample data · Existing Python backend unchanged</span></footer>
-      </div>}
+          </section>
+
+          <section className="editorial-panel activity-panel">
+            <header className="editorial-panel-head"><div><span className="section-kicker">06 — RECENT SIGNAL</span><h2>Workspace activity</h2><p>Example events to demonstrate the activity layout.</p></div><span className="sample-pill">SAMPLE FEED</span></header>
+            <div className="editorial-activity-list">{visible.slice(0,4).map((row,i)=><div className="editorial-activity-row" key={row[0]}><span className="activity-monogram">{row[0]}</span><span className="activity-copy"><b>{row[1]}</b><small>{row[2]}</small></span><em>{row[3]}</em><span className="activity-age">{i===0?"NOW":i===1?"24M":"1H"}</span></div>)}{!visible.length&&<p className="empty">No sample activity matches that search.</p>}</div>
+          </section>
+          <footer className="page-foot"><span>DuoAI Studio · Workspace</span><span>Illustrative metrics · Existing Python backend unchanged</span></footer>
+        </div></div>}
     </main>
     <button className="effects" onClick={()=>setLow(v=>!v)}><i className={low ? "on" : ""}/>{low ? "Low effects on" : "Low effects off"}</button>
   </div>;
