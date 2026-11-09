@@ -236,60 +236,64 @@ function ReviewCenter({ query }: { query: string }) {
 }
 
 
-const projectDirectory = [
-  { id:"desktop", name:"Desktop experience refresh", initials:"DE", description:"A polished desktop workspace for planning, coding, testing and reviewing work.", stack:"Electron · React · TypeScript", branch:"main", status:"In progress", progress:68, tasks:"5 / 8 tasks", updated:"Updated recently", color:"blue", lead:"Coding Agent", next:"Finish the responsive workspace layout", tags:["Desktop UI","Electron","Frontend"] },
-  { id:"api", name:"API integration", initials:"AI", description:"A gradual integration layer connecting the desktop interface to the existing Python services.", stack:"Python · FastAPI", branch:"feature/provider-api", status:"In progress", progress:42, tasks:"3 / 7 tasks", updated:"Updated today", color:"green", lead:"Master Orchestrator", next:"Document the local bridge contract", tags:["Backend","Integration","Python"] },
-  { id:"website", name:"Website refresh", initials:"WR", description:"A refreshed public website with clear product information and a focused application flow.", stack:"React · Vite", branch:"main", status:"In review", progress:84, tasks:"8 / 10 tasks", updated:"Awaiting review", color:"amber", lead:"Review Agent", next:"Resolve the remaining review notes", tags:["Website","Frontend","Review"] },
-  { id:"research", name:"Provider comparison", initials:"PC", description:"Research notes comparing model providers, capabilities and practical trade-offs.", stack:"Research · Documentation", branch:"docs/provider-notes", status:"Completed", progress:100, tasks:"6 / 6 tasks", updated:"Completed this week", color:"violet", lead:"Research Agent", next:"Keep the decision record up to date", tags:["Research","Planning","Docs"] }
-];
 function ProjectsScreen({ query, onOpenWorkspace }: { query:string; onOpenWorkspace:()=>void }) {
-  const [filter,setFilter]=useState("All projects");
-  const [selectedId,setSelectedId]=useState("desktop");
-  const filters=["All projects","In progress","In review","Completed"];
-  const visible=projectDirectory.filter(project=>(filter==="All projects"||project.status===filter)&&[project.name,project.description,project.stack,project.branch,...project.tags].join(" ").toLowerCase().includes(query.toLowerCase()));
+  const [projects,setProjects]=useState<any[]>([]);
+  const [selectedId,setSelectedId]=useState<string|null>(null);
+  const [newName,setNewName]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
+  const load=async()=>{const data=await window.duoDesktop.backend.invoke("projects.list");setProjects(data.projects);setSelectedId(current=>current??data.projects[0]?.id??null);};
+  useEffect(()=>{load().catch(e=>setError(e.message));},[]);
+  const create=async()=>{
+    if(!newName.trim()||busy)return;
+    setBusy(true);setError("");
+    try{const data=await window.duoDesktop.backend.invoke("projects.create",{name:newName.trim()});setProjects(old=>[...old,data.project].sort((x,y)=>x.name.localeCompare(y.name)));setSelectedId(data.project.id);setNewName("");}
+    catch(e){setError((e as Error).message);}finally{setBusy(false);}
+  };
+  const visible=projects.filter(project=>(project.name+" "+(project.prompt||"")).toLowerCase().includes(query.toLowerCase()));
   const selected=visible.find(project=>project.id===selectedId)??visible[0];
+  const totalTasks=projects.reduce((sum,p)=>sum+(p.tasks?.length||0),0);
+  const completedTasks=projects.reduce((sum,p)=>sum+(p.tasks||[]).filter((t:any)=>!!t.output).length,0);
   return <div className="content projects-content">
-    <section className="welcome projects-welcome"><div><label>— YOUR WORK</label><h1>Every project, in one place.</h1><p>Keep an eye on progress, ownership and the next step across your workspace.</p></div><span className="preview">● UI PREVIEW · SAMPLE PROJECTS</span></section>
+    <section className="welcome projects-welcome"><div><label>— YOUR WORK</label><h1>Every project, in one place.</h1><p>Projects are read from your local DuoAI Python workspace.</p></div><span className="preview">● LIVE LOCAL PROJECTS</span></section>
     <section className="projects-summary">
-      <article><span className="projects-summary-icon"><FolderKanban size={17}/></span><div><strong>04</strong><small>Total projects</small></div></article>
-      <article><span className="projects-summary-icon"><Activity size={17}/></span><div><strong>02</strong><small>In progress</small></div></article>
-      <article><span className="projects-summary-icon"><GitPullRequest size={17}/></span><div><strong>01</strong><small>In review</small></div></article>
-      <article><span className="projects-summary-icon"><Check size={17}/></span><div><strong>01</strong><small>Completed</small></div></article>
-      <div className="projects-connection"><CircleDot size={14}/><span>Sample data · backend not connected</span></div>
+      <article><span className="projects-summary-icon"><FolderKanban size={17}/></span><div><strong>{String(projects.length).padStart(2,"0")}</strong><small>Local projects</small></div></article>
+      <article><span className="projects-summary-icon"><ListChecks size={17}/></span><div><strong>{String(totalTasks).padStart(2,"0")}</strong><small>Saved tasks</small></div></article>
+      <article><span className="projects-summary-icon"><Check size={17}/></span><div><strong>{String(completedTasks).padStart(2,"0")}</strong><small>Tasks with output</small></div></article>
+      <div className="projects-connection"><CircleDot size={14}/><span>Synced with ~/.duoai/projects</span></div>
     </section>
-    <div className="projects-toolbar"><div className="projects-filters" role="group" aria-label="Filter projects">{filters.map(item=><button key={item} className={filter===item?"active":""} onClick={()=>setFilter(item)}>{item}</button>)}</div><span>{visible.length} {visible.length===1?"project":"projects"}</span></div>
+    <div className="projects-toolbar"><div className="projects-create"><input value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")create();}} placeholder="Name a new project…"/><button onClick={create} disabled={busy||!newName.trim()}><Plus size={14}/> New project</button></div><span>{visible.length} {visible.length===1?"project":"projects"}</span></div>
+    {error&&<p className="projects-error">{error}</p>}
     <div className="projects-layout">
-      <section className="projects-grid" aria-label="Project directory">
-        {visible.map(project=><button key={project.id} className={selected?.id===project.id?"project-card selected":"project-card"} onClick={()=>setSelectedId(project.id)} aria-pressed={selected?.id===project.id}>
-          <div className="project-card-top"><span className={"project-card-mark "+project.color}>{project.initials}</span><span className={"project-status "+project.status.toLowerCase().replaceAll(" ","-")}>{project.status}</span></div>
-          <strong>{project.name}</strong><p>{project.description}</p>
-          <div className="project-card-stack">{project.stack}</div>
-          <div className="project-card-progress"><span>Progress</span><b>{project.progress}%</b></div><div className="project-card-track"><i style={{width:project.progress+"%"}}/></div>
-          <div className="project-card-foot"><span><Check size={12}/>{project.tasks}</span><span>{project.updated}</span></div>
-        </button>)}
-        {!visible.length&&<div className="projects-empty">No projects match this search or filter.</div>}
+      <section className="projects-grid" aria-label="Local project directory">
+        {visible.map(project=>{
+          const tasks=project.tasks||[];const done=tasks.filter((t:any)=>!!t.output).length;const progress=tasks.length?Math.round(done/tasks.length*100):0;
+          return <button key={project.id} className={selected?.id===project.id?"project-card selected":"project-card"} onClick={()=>setSelectedId(project.id)} aria-pressed={selected?.id===project.id}>
+            <div className="project-card-top"><span className="project-card-mark blue">{project.name.slice(0,2).toUpperCase()}</span><span className={"project-status "+(tasks.length?"in-progress":"new")}>{tasks.length?"Active":"New"}</span></div>
+            <strong>{project.name}</strong><p>{project.prompt||"No project brief saved yet. Open the workspace to begin planning."}</p>
+            <div className="project-card-stack">Local Python project · {project.id}</div>
+            <div className="project-card-progress"><span>Tasks with output</span><b>{progress}%</b></div><div className="project-card-track"><i style={{width:progress+"%"}}/></div>
+            <div className="project-card-foot"><span><Check size={12}/>{done} / {tasks.length} tasks with output</span><span>{(project.log||[]).length} saved result entries</span></div>
+          </button>;
+        })}
+        {!visible.length&&<div className="projects-empty">{projects.length?"No projects match this search.":"No local projects yet. Create one above to get started."}</div>}
       </section>
       {selected?<aside className="project-inspector">
-        <div className="project-inspector-head"><span>PROJECT OVERVIEW</span><span>PREVIEW</span></div>
-        <span className={"project-inspector-mark "+selected.color}>{selected.initials}</span>
-        <h2>{selected.name}</h2><p>{selected.description}</p>
-        <div className="project-inspector-status"><span className={"project-status "+selected.status.toLowerCase().replaceAll(" ","-")}>{selected.status}</span><small>{selected.updated}</small></div>
-        <div className="project-inspector-progress"><div><span>Overall progress</span><b>{selected.progress}%</b></div><i><span style={{width:selected.progress+"%"}}/></i></div>
-        <div className="project-inspector-section"><label>TECH STACK</label><strong>{selected.stack}</strong></div>
-        <div className="project-inspector-section"><label>ACTIVE BRANCH</label><strong><GitBranch size={13}/>{selected.branch}</strong></div>
-        <div className="project-inspector-section"><label>COORDINATION</label><strong><Bot size={13}/>{selected.lead}</strong></div>
-        <div className="project-next-step"><label>NEXT STEP</label><p>{selected.next}</p></div>
-        <div className="project-inspector-tags">{selected.tags.map(tag=><span key={tag}>{tag}</span>)}</div>
+        <div className="project-inspector-head"><span>LOCAL PROJECT</span><span>PYTHON CORE</span></div>
+        <span className="project-inspector-mark blue">{selected.name.slice(0,2).toUpperCase()}</span>
+        <h2>{selected.name}</h2><p>{selected.prompt||"This project does not have a saved brief yet."}</p>
+        <div className="project-inspector-status"><span className="project-status in-progress">{(selected.tasks||[]).length?"Active":"New"}</span><small>{(selected.log||[]).length} saved result entries</small></div>
+        <div className="project-inspector-progress"><div><span>Tasks with output</span><b>{(selected.tasks||[]).length?Math.round((selected.tasks||[]).filter((t:any)=>!!t.output).length/selected.tasks.length*100):0}%</b></div><i><span style={{width:((selected.tasks||[]).length?Math.round((selected.tasks||[]).filter((t:any)=>!!t.output).length/selected.tasks.length*100):0)+"%"}}/></i></div>
+        <div className="project-inspector-section"><label>PROJECT ID</label><strong>{selected.id}</strong></div>
+        <div className="project-inspector-section"><label>SAVED TASKS</label><strong>{(selected.tasks||[]).length}</strong></div>
+        <div className="project-inspector-section"><label>LOCAL STORAGE</label><strong>~/.duoai/projects</strong></div>
         <button className="project-open-workspace" onClick={onOpenWorkspace}>Open workspace <ArrowUpRight size={15}/></button>
-        <small className="project-inspector-note">Preview navigation only · no files or repository data are accessed.</small>
+        <small className="project-inspector-note">Project records are live. Workspace file editing is not connected yet.</small>
       </aside>:<aside className="project-inspector project-inspector-empty">Select a project to see its overview.</aside>}
     </div>
-    <footer className="page-foot"><span>DuoAI Studio · Projects UI preview</span><span>Sample project data · No repository actions exposed</span></footer>
+    <footer className="page-foot"><span>DuoAI Studio · Local project directory</span><span>Project records from the existing Python core</span></footer>
   </div>;
 }
-
-
-
 type ProviderInfo = { id:string; label:string; connected:boolean; model:string; models:string[]; master:boolean };
 function ProviderSettings() {
   const [providers,setProviders]=useState<ProviderInfo[]>([]);
