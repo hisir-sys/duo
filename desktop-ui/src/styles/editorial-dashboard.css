@@ -538,3 +538,28 @@ main {
 .project-card-stack { overflow-wrap:anywhere; }
 :root[data-theme="dark"] .projects-create input { background:rgba(255,255,255,.035); }
 @media(max-width:760px) { .projects-create { width:100%; } .projects-create input { width:100%; } .projects-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+.live-runs-panel { margin:0 0 18px; padding:19px; border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 7px 24px rgba(30,42,33,.035),inset 0 1px 0 rgba(255,255,255,.72); }
+.live-runs-panel>header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.live-runs-panel h2 { margin:6px 0 4px; color:var(--text-strong); font-size:18px; letter-spacing:-.5px; }
+.live-runs-panel header p { margin:0; color:var(--muted); font-size:10px; }
+.live-runs-panel header button { display:flex; align-items:center; gap:6px; height:31px; padding:0 9px; border:1px solid var(--border); border-radius:8px; background:var(--surface-muted); color:var(--text); font-size:9px; cursor:pointer; }
+.live-runs-panel header button:disabled { opacity:.5; cursor:wait; }
+.live-runs-empty { margin:14px 0 0; padding:15px; border:1px dashed var(--border); border-radius:10px; color:var(--muted); font-size:10px; line-height:1.5; }
+.live-runs-list { display:grid; gap:9px; margin-top:15px; }
+.live-run-card { padding:12px 13px; border:1px solid var(--border); border-radius:11px; background:var(--surface-muted); }
+.live-run-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.live-run-head>span:first-child { display:grid; gap:4px; }
+.live-run-head b { color:var(--text-strong); font:10px "JetBrains Mono",monospace; }
+.live-run-head small,.live-run-safety { color:var(--muted); font-size:8px; }
+.live-run-count { color:var(--muted); font:9px "JetBrains Mono",monospace; }
+.live-run-results { margin-top:10px; border-top:1px solid var(--border); }
+.live-run-results details { padding:9px 0; border-bottom:1px solid var(--border); }
+.live-run-results summary { display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--text); font-size:9px; cursor:pointer; }
+.live-run-results summary em { color:var(--muted); font:8px "JetBrains Mono",monospace; font-style:normal; text-transform:uppercase; }
+.live-run-results summary em.completed { color:#648b6d; }
+.live-run-results summary em.failed { color:#b16d62; }
+.live-run-results details p { max-height:190px; overflow:auto; margin:8px 0; color:var(--muted); font-size:9px; line-height:1.6; white-space:pre-wrap; }
+.live-run-results details>small { color:var(--soft); font-size:8px; overflow-wrap:anywhere; }
+.live-run-safety { display:block; margin-top:10px; padding-top:9px; border-top:1px solid var(--border); }
+:root[data-theme="dark"] .live-runs-panel { background:rgba(255,255,255,.025); box-shadow:0 10px 30px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.035); }
