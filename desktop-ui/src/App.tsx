@@ -353,31 +353,66 @@ export default function App() {
     </aside>
     <main>
       <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Settings" ? "Search settings..." : page === "Projects" ? "Search projects..." : page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><AgentOrb compact/></div></header>
-      {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content">
-        <section className="welcome"><div><label>— YOUR WORKSPACE</label><h1>Good to see you.</h1><p>Here’s what’s happening across your projects today.</p></div><span className="preview">● UI PREVIEW · SAMPLE DATA</span></section>
-        <section className="metrics">
-          <Metric label="Active projects" value="04" note="↗ 2 this month" icon={FolderKanban}/>
-          <Metric label="Tasks in progress" value="12" note="Across 4 projects" icon={Activity}/>
-          <Metric label="Reviews waiting" value="03" note="Needs your attention" icon={GitPullRequest} warm/>
-          <article className="metric"><div className="metric-head"><span>Completion rate</span><Gauge size={17}/></div><div className="gauge"><svg viewBox="0 0 100 58"><path d="M10 50 A40 40 0 0 1 90 50" className="track"/><path d="M10 50 A40 40 0 0 1 90 50" className="value"/></svg><b>78<small>%</small></b></div><small>↗ 6.4% vs. last month</small></article>
+      {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content home-redesign">
+        <section className="home-intro">
+          <div><span className="home-kicker">DUOAI STUDIO <i/> PERSONAL WORKSPACE</span><h1>Your work,<br/><em>in good hands.</em></h1><p>A clear place to plan projects, coordinate specialist agents and review the work they prepare.</p></div>
+          <div className="home-intro-meta"><span className="home-status-dot"/><span>Local preview</span><b>·</b><span>Backend bridge pending</span></div>
         </section>
-        <section className="middle">
-          <article className="panel project"><div className="panel-head"><div><label>YOUR WORK</label><h2>Project activity</h2></div><span>View projects ↗</span></div>
-            <div className="project-row"><div className="project-icon"><Workflow size={18}/></div><div><b>Desktop experience refresh</b><small>Updated a few minutes ago</small></div><em>In progress</em></div>
-            <div className="progress-label"><span>Overall progress</span><b>68%</b></div><div className="progress"><i/></div><div className="project-meta"><span>◉ ◉ ◉ &nbsp;3 workers assigned</span><span>5 of 8 tasks complete</span></div>
-            <hr/><div className="chart-head"><div><b>Weekly activity</b><small>Task updates over the last 7 days</small></div><span>● Activity</span></div>
-            <div className="chart">{bars.map((n,i)=><div key={i}><i style={{height:n+"%"}}/><small>{"MTWTFSS"[i]}</small></div>)}</div>
-          </article>
-          <div className="right-col">
-            <article className="focus"><div className="focus-head"><span><Sparkles size={14}/> ORCHESTRATOR</span><small>PREVIEW</small></div><div className="focus-body"><div><h2>One clear view.<br/>Every moving part.</h2><p>Your AI team’s command layer will live here.</p></div><AgentOrb/></div><footer>● Waiting for backend connection <b>↗</b></footer></article>
-            <article className="review"><div className="review-head"><GitPullRequest size={17}/><b>REVIEW QUEUE</b><strong>03</strong></div><h3>Good work deserves a second look.</h3><p>Proposed changes will appear here when the review workflow is connected.</p><footer>Approval workflow <b>Not connected</b></footer></article>
+        <section className="home-hero">
+          <div className="home-hero-copy">
+            <span className="home-section-index">01 / WORKSPACE</span>
+            <h2>Make progress<br/><em>visible.</em></h2>
+            <p>Pick up where you left off. Your projects, plans and reviews stay together, with the orchestrator designed to coordinate the moving parts.</p>
+            <div className="home-hero-actions">
+              <button className="home-primary" onClick={()=>setPage("Workspace")}>Open workspace <ArrowRight size={16}/></button>
+              <button className="home-secondary" onClick={()=>setPage("Master Control Room")}>View orchestration <ArrowUpRight size={15}/></button>
+            </div>
+            <div className="home-hero-foot"><span><CircleDot size={13}/> Preview environment</span><span>Python services connect in a later stage</span></div>
+          </div>
+          <div className="home-hero-art">
+            <div className="home-art-grid"/>
+            <div className="home-orb-stage"><AgentOrb/></div>
+            <div className="home-orb-label"><span>DUO / 01</span><b>Orchestration core</b><small>Concept visual · not a live process</small></div>
+            <div className="home-art-stamp">PLAN<br/>BUILD<br/>REVIEW</div>
           </div>
         </section>
-        <section className="panel recent"><div className="panel-head"><div><label>LATEST UPDATES</label><h2>Recent activity</h2></div><small>Sample timeline · not live backend data</small></div>
-          {visible.map((row)=><div className="feed" key={row[0]}><span className="avatar">{row[0]}</span><div><b>{row[1]}</b><small>{row[2]}</small></div><em>{row[3]}</em><Check size={14}/></div>)}
-          {!visible.length && <p className="empty">No sample activity matches that search.</p>}
+        <section className="home-metrics" aria-label="Workspace summary">
+          <article><span>ACTIVE PROJECTS</span><strong>04</strong><small><FolderKanban size={13}/> Across your workspace</small></article>
+          <article><span>TASKS IN PROGRESS</span><strong>12</strong><small><Activity size={13}/> Across 4 projects</small></article>
+          <article><span>REVIEWS WAITING</span><strong>03</strong><small><GitPullRequest size={13}/> Ready for attention</small></article>
+          <article className="home-completion"><span>COMPLETION RATE</span><strong>78<small>%</small></strong><div className="home-meter"><i/></div><small>Sample project activity</small></article>
         </section>
-        <footer className="page-foot"><span>DuoAI Studio · Desktop UI preview</span><span>Python backend unchanged · Electron shell only</span></footer>
+        <section className="home-work-grid">
+          <article className="home-projects-panel">
+            <header className="home-panel-heading"><div><span className="home-section-index">02 / IN MOTION</span><h2>Active projects</h2><p>Recent work across your workspace.</p></div><button onClick={()=>setPage("Projects")}>All projects <ArrowUpRight size={14}/></button></header>
+            <div className="home-project-list">
+              <button className="home-project-row" onClick={()=>setPage("Workspace")}><span className="home-project-mark mark-sage">DE</span><span className="home-project-info"><b>Desktop experience refresh</b><small>React · TypeScript <i/> Updated a few minutes ago</small><span className="home-project-track"><i style={{width:"68%"}}/></span></span><span className="home-project-progress"><b>68%</b><small>5 / 8 tasks</small></span><ArrowUpRight size={16}/></button>
+              <button className="home-project-row" onClick={()=>setPage("Projects")}><span className="home-project-mark mark-amber">AI</span><span className="home-project-info"><b>API integration</b><small>Python · FastAPI <i/> Provider configuration</small><span className="home-project-track"><i style={{width:"42%"}}/></span></span><span className="home-project-progress"><b>42%</b><small>3 / 7 tasks</small></span><ArrowUpRight size={16}/></button>
+              <button className="home-project-row" onClick={()=>setPage("Projects")}><span className="home-project-mark mark-blue">WR</span><span className="home-project-info"><b>Website refresh</b><small>React · Vite <i/> Updated earlier today</small><span className="home-project-track"><i style={{width:"84%"}}/></span></span><span className="home-project-progress"><b>84%</b><small>8 / 10 tasks</small></span><ArrowUpRight size={16}/></button>
+            </div>
+            <footer className="home-project-footer"><span><span className="home-status-dot"/> Sample project data</span><span>Project actions are preview navigation only</span></footer>
+          </article>
+          <aside className="home-side-stack">
+            <section className="home-orchestrator-card">
+              <div className="home-card-top"><span className="home-section-index">03 / TEAM</span><span className="home-tag">PREVIEW</span></div>
+              <div className="home-orchestrator-title"><div><h2>One coordinator.<br/>Specialist workers.</h2><p>See how the agent roles fit together.</p></div><span className="home-mini-orb"><AgentOrb compact/></span></div>
+              <button onClick={()=>setPage("Agents")}>Explore agent profiles <ArrowRight size={14}/></button>
+            </section>
+            <section className="home-queue-card">
+              <div className="home-card-top"><span className="home-section-index">04 / REVIEW</span><GitPullRequest size={16}/></div>
+              <div className="home-queue-number">03</div><h3>Changes waiting for a second look.</h3><p>Review proposals and inspect their findings before approval.</p>
+              <button onClick={()=>setPage("Review Center")}>Open review center <ArrowUpRight size={14}/></button>
+            </section>
+          </aside>
+        </section>
+        <section className="home-lower-grid">
+          <article className="home-activity-panel">
+            <header className="home-panel-heading"><div><span className="home-section-index">05 / RECENT SIGNAL</span><h2>Activity</h2></div><span className="home-sample-note">Sample timeline</span></header>
+            <div className="home-activity-list">{visible.slice(0,4).map((row,i)=><div className="home-activity-row" key={row[0]}><span className="home-activity-avatar">{row[0]}</span><div><b>{row[1]}</b><small>{row[2]}</small></div><em>{row[3]}</em><span className="home-activity-line">{i===0?"NOW":i===1?"24M":"1H"}</span></div>)}{!visible.length&&<p className="empty">No sample activity matches that search.</p>}</div>
+          </article>
+          <aside className="home-bridge-panel"><span className="home-section-index">SYSTEM STATUS</span><div className="home-bridge-indicator"><span/><b>Desktop preview running</b></div><p>The interface is running in Electron. The Python backend and live agent execution are not connected to this screen yet.</p><div className="home-bridge-meta"><span>UI SHELL <b>READY</b></span><span>PYTHON BRIDGE <b>PENDING</b></span></div><button onClick={()=>setPage("Settings")}>Workspace settings <ArrowUpRight size={14}/></button></aside>
+        </section>
+        <footer className="page-foot"><span>DuoAI Studio · Workspace</span><span>Sample data · Existing Python backend unchanged</span></footer>
       </div>}
     </main>
     <button className="effects" onClick={()=>setLow(v=>!v)}><i className={low ? "on" : ""}/>{low ? "Low effects on" : "Low effects off"}</button>
