@@ -342,7 +342,7 @@ export default function App() {
     <aside className="nav-dock" aria-label="Main navigation">
       <div className="nav-rail">
         <div className="rail-brand" aria-label="DuoAI Studio"><img src="./duo-mark.svg" alt=""/></div>
-        <button className={page === "Home" || page === "Projects" || page === "Agents" || page === "Master Control Room" || page === "Workspace" || page === "Review Center" ? "rail-button rail-home active" : "rail-button rail-home"} aria-label="Open Home navigation" aria-expanded="true" title="Home">
+        <button className={page === "Home" || page === "Projects" || page === "Agents" || page === "Master Control Room" || page === "Workspace" || page === "Review Center" ? "rail-button rail-home active" : "rail-button rail-home"} aria-label="Home" title="Home" onClick={() => { setPage("Home"); setQuery(""); }}>
           <LayoutDashboard size={19}/>
         </button>
         <div className="rail-divider"/>
