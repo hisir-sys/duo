@@ -353,8 +353,7 @@ export default function App() {
     </aside>
     <main>
       <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Settings" ? "Search settings..." : page === "Projects" ? "Search projects..." : page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
-      {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content home-redesign">
-        <div className="content editorial-dashboard">
+      {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content editorial-dashboard">
           <section className="dashboard-heading">
             <div>
               <span className="eyebrow"><i/> DUO STUDIO / WORKSPACE OVERVIEW</span>
@@ -435,7 +434,7 @@ export default function App() {
             <div className="editorial-activity-list">{visible.slice(0,4).map((row,i)=><div className="editorial-activity-row" key={row[0]}><span className="activity-monogram">{row[0]}</span><span className="activity-copy"><b>{row[1]}</b><small>{row[2]}</small></span><em>{row[3]}</em><span className="activity-age">{i===0?"NOW":i===1?"24M":"1H"}</span></div>)}{!visible.length&&<p className="empty">No sample activity matches that search.</p>}</div>
           </section>
           <footer className="page-foot"><span>DuoAI Studio · Workspace</span><span>Illustrative metrics · Existing Python backend unchanged</span></footer>
-        </div></div>}
+        </div>}
     </main>
     <button className="effects" onClick={()=>setLow(v=>!v)}><i className={low ? "on" : ""}/>{low ? "Low effects on" : "Low effects off"}</button>
   </div>;
