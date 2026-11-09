@@ -80,54 +80,49 @@ const controlNodes = [
   { id: "research", name: "Research Agent", role: "Finds technical context", type: "Worker", icon: BookOpen, color: "violet", description: "Collects technical information and compares options to help the coordinator make informed implementation decisions.", inputs: ["Research question", "Project constraints"], outputs: ["Research notes", "Option comparison"], stage: "Specialist worker" }
 ];
 
-function MasterControlRoom({ query }: { query: string }) {
-  const [selectedId, setSelectedId] = useState("orchestrator");
-  const selected = controlNodes.find(node => node.id === selectedId) ?? controlNodes[0];
-  const SelectedIcon = selected.icon;
-  const matches = controlNodes.filter(node => [node.name, node.role, node.description, node.type].join(" ").toLowerCase().includes(query.toLowerCase()));
-  const workers = matches.filter(node => node.id !== "orchestrator");
-  const showCoordinator = matches.some(node => node.id === "orchestrator");
+function MasterControlRoom({ query }: { query:string }) {
+  const [goal,setGoal]=useState("");
+  const [projectRoot,setProjectRoot]=useState("");
+  const [plan,setPlan]=useState<any>(null);
+  const [run,setRun]=useState<any>(null);
+  const [busy,setBusy]=useState<"plan"|"run"|"">("");
+  const [error,setError]=useState("");
+  const [status,setStatus]=useState("");
+  const makePlan=async()=>{
+    setBusy("plan");setError("");setStatus("Asking the configured Master provider to plan this work…");setRun(null);
+    try{const data=await window.duoDesktop.backend.invoke("master.plan",{goal,project_root:projectRoot.trim()||undefined});setPlan(data.plan);setStatus("Plan created and validated by the Python Master Orchestrator.");}
+    catch(e){setError((e as Error).message);setStatus("");}finally{setBusy("");}
+  };
+  const runWorkers=async()=>{
+    if(!plan)return;
+    setBusy("run");setError("");setStatus("Running isolated worker agents. This may take a few minutes…");
+    try{const data=await window.duoDesktop.backend.invoke("master.run",{plan,project_id:"adhoc"});setRun(data.run);setStatus("Worker run finished. Proposed files remain isolated for review.");}
+    catch(e){setError((e as Error).message);setStatus("");}finally{setBusy("");}
+  };
+  const visible=controlNodes.filter(node=>[node.name,node.role,node.description,node.type].join(" ").toLowerCase().includes(query.toLowerCase()));
+  const stages=plan?.stages??[];
   return <div className="content control-content">
-    <section className="welcome control-welcome"><div><label>— ORCHESTRATION</label><h1>Master Control Room.</h1><p>A visual map of how the coordinator and specialist agents fit together.</p></div><span className="preview">● UI PREVIEW · STATIC WORKFLOW</span></section>
-    <section className="control-summary">
-      <article><span className="control-summary-icon"><BrainCircuit size={17}/></span><div><strong>01</strong><small>Coordinator</small></div></article>
-      <article><span className="control-summary-icon"><Bot size={17}/></span><div><strong>04</strong><small>Specialist roles</small></div></article>
-      <article><span className="control-summary-icon"><GitBranch size={17}/></span><div><strong>05</strong><small>Workflow profiles</small></div></article>
-      <div className="control-status"><CircleDot size={14}/><span>Execution bridge not connected</span></div>
+    <section className="welcome control-welcome"><div><label>— MASTER ORCHESTRATION</label><h1>Master Control Room.</h1><p>Plan work with the Python Master Orchestrator, then delegate approved tasks to isolated specialist workers.</p></div><span className="preview">● LIVE BACKEND OPERATIONS</span></section>
+    <section className="master-console">
+      <div className="master-console-head"><div><span className="section-kicker">01 — NEW EXECUTION</span><h2>What should Duo work on?</h2><p>The Master creates a dependency-aware plan using your configured providers.</p></div><span className="master-console-mark"><BrainCircuit size={21}/></span></div>
+      <textarea value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Describe the goal, constraints, expected result, and any important context…" rows={4}/>
+      <label className="master-path-label">OPTIONAL PROJECT FOLDER <span>READ-ONLY CONTEXT INSPECTION</span></label>
+      <input className="master-path-input" value={projectRoot} onChange={e=>setProjectRoot(e.target.value)} placeholder="e.g. /home/user/Projects/my-app"/>
+      <div className="master-console-actions"><small><LockKeyhole size={13}/> Provider keys stay in the OS credential vault</small><button onClick={makePlan} disabled={!!busy||!goal.trim()}>{busy==="plan"?<LoaderCircle size={15} className="spin"/>:<Sparkles size={15}/>} Create plan</button></div>
+      {status&&<p className="master-status"><CircleDot size={13}/>{status}</p>}
+      {error&&<p className="master-error">{error}</p>}
     </section>
-    <div className="control-layout">
-      <section className="control-map-panel">
-        <div className="control-panel-head"><div><label>TEAM TOPOLOGY</label><h2>Orchestration map</h2></div><span className="map-legend"><i/> Profile preview</span></div>
-        <div className="workflow-map">
-          {showCoordinator && <button className={selectedId === "orchestrator" ? "workflow-node coordinator selected" : "workflow-node coordinator"} onClick={() => setSelectedId("orchestrator")}>
-            <span className="workflow-node-icon blue"><BrainCircuit size={20}/></span><span className="workflow-node-copy"><small>MASTER · COORDINATION</small><strong>Master Orchestrator</strong><em>Plans · Delegates · Collects</em></span><ArrowUpRight size={16}/>
-          </button>}
-          {showCoordinator && <div className="workflow-connector"><i/><span>Task routing · conceptual</span><i/></div>}
-          <div className="workflow-workers">
-            {workers.map(node => { const Icon = node.icon; return <button key={node.id} className={selectedId === node.id ? "workflow-node worker selected" : "workflow-node worker"} onClick={() => setSelectedId(node.id)}>
-              <span className={"workflow-node-icon " + node.color}><Icon size={18}/></span><span className="workflow-node-copy"><small>{node.type.toUpperCase()}</small><strong>{node.name}</strong><em>{node.role}</em></span><ArrowUpRight size={15}/>
-            </button>; })}
-          </div>
-          {!matches.length && <div className="control-empty">No workflow profiles match this search.</div>}
-          <div className="workflow-footnote"><Radio size={14}/> Connections illustrate intended responsibilities, not live agent traffic.</div>
-        </div>
-      </section>
-      <aside className="control-detail">
-        <div className="control-detail-head"><span>NODE INSPECTOR</span><span className="control-preview-tag">PREVIEW</span></div>
-        <div className={"control-detail-icon " + selected.color}><SelectedIcon size={23}/></div>
-        <h2>{selected.name}</h2><p className="control-detail-role">{selected.role}</p>
-        <div className="control-detail-state"><CircleDot size={13}/><span>Not connected to a live session</span></div>
-        <p className="control-detail-description">{selected.description}</p>
-        <div className="control-detail-section"><h3><ArrowRight size={14}/> Inputs</h3>{selected.inputs.map(item => <span className="control-data-chip" key={item}>{item}</span>)}</div>
-        <div className="control-detail-section"><h3><Check size={14}/> Outputs</h3>{selected.outputs.map(item => <span className="control-data-chip" key={item}>{item}</span>)}</div>
-        <div className="control-detail-meta"><span>ROLE TYPE</span><strong>{selected.stage}</strong><small>Actual execution and task routing remain managed by the existing Python backend.</small></div>
-      </aside>
-    </div>
-    <section className="control-lifecycle">
-      <div><span className="lifecycle-icon"><ListChecks size={17}/></span><div><strong>Conceptual work cycle</strong><p>Request → Plan → Delegate → Check → Review → Result. This is an explanatory map, not a live run or an executable workflow.</p></div></div>
-      <span className="lifecycle-note"><Clock3 size={13}/> Live run history comes later</span>
+    {plan&&<section className="master-plan-panel">
+      <header className="editorial-panel-head"><div><span className="section-kicker">02 — VALIDATED PLAN</span><h2>Execution plan</h2><p>{plan.tasks.length} tasks · {stages.length} dependency stages · Master: {plan.master_provider}</p></div><button onClick={runWorkers} disabled={!!busy}>{busy==="run"?<LoaderCircle size={14} className="spin"/>:<Play size={14}/>} Run workers</button></header>
+      <div className="master-stage-list">{stages.map((stage:string[],index:number)=><div className="master-stage" key={index}><span className="master-stage-label">STAGE {String(index+1).padStart(2,"0")}</span><div>{stage.map((id:string)=>{const task=plan.tasks.find((item:any)=>item.id===id);return task?<article className="master-task-card" key={id}><div><span className={"master-role-icon "+task.role}>{task.role==="coding"?<Code2 size={15}/>:task.role==="testing"?<FlaskConical size={15}/>:task.role==="review"?<ShieldCheck size={15}/>:<BookOpen size={15}/>}</span><span><b>{task.title}</b><small>{task.role} · {task.provider}</small></span></div><p>{task.instructions}</p><small className="master-criteria">ACCEPTANCE · {task.acceptance_criteria.join(" · ")}</small></article>:null;})}</div></div>)}</div>
+      <p className="master-safety-note"><ShieldCheck size={14}/> Worker agents produce proposed files in isolated workspaces. They do not run commands or modify your selected source project.</p>
+    </section>}
+    {run&&<section className="master-run-panel"><header><div><span className="section-kicker">03 — WORKER RESULTS</span><h2>Run complete</h2></div><span className="master-run-id">{run.run_id.slice(0,8)}</span></header><div className="master-run-metrics"><article><b>{run.completed}</b><small>Completed</small></article><article><b>{run.failed}</b><small>Failed</small></article><article><b>{run.blocked}</b><small>Blocked</small></article></div>{run.results.map((item:any)=><article className="master-result" key={item.task_id}><div><b>{item.task_id}</b><span className={"master-result-status "+item.status}>{item.status}</span></div><small>{item.role} · {item.provider}</small>{item.error&&<p>{item.error}</p>}{item.artifacts?.length>0&&<p>Proposed files: {item.artifacts.join(", ")}</p>}<details><summary>View worker output</summary><pre>{item.output||item.error||"No output."}</pre></details></article>)}<p className="master-safety-note"><ShieldCheck size={14}/> Verified boundary: source_project_modified = false · commands_executed = false. Review proposals before any manual application.</p></section>}
+    <section className="control-layout">
+      <section className="control-map-panel"><div className="control-panel-head"><div><label>WORKER DIRECTORY</label><h2>Specialist roles</h2></div><span className="map-legend"><i/> Python worker system</span></div><div className="workflow-workers master-workers">{visible.filter(node=>node.id!=="orchestrator").map(node=>{const Icon=node.icon;return <article className="workflow-node worker" key={node.id}><span className={"workflow-node-icon "+node.color}><Icon size={18}/></span><span className="workflow-node-copy"><small>{node.type.toUpperCase()}</small><strong>{node.name}</strong><em>{node.role}</em></span></article>;})}</div><div className="workflow-footnote"><Radio size={14}/> Worker definitions are live in the Python core; these are role summaries.</div></section>
+      <aside className="control-detail"><div className="control-detail-head"><span>EXECUTION GUARANTEES</span><span className="control-preview-tag">SAFE MODE</span></div><div className="control-detail-icon green"><ShieldCheck size={23}/></div><h2>Review before apply.</h2><p className="control-detail-description">Coding agents save proposals to a dedicated run workspace. Testing and review agents report findings but do not execute project code.</p><div className="control-detail-section"><h3><Check size={14}/> Protected boundaries</h3>{["No shell commands from workers","No direct source-project writes","Proposed artifacts stay isolated","Dependency failures block downstream tasks"].map(item=><span className="control-data-chip" key={item}>{item}</span>)}</div></aside>
     </section>
-    <footer className="page-foot"><span>DuoAI Studio · Master Control Room preview</span><span>Static sample topology · No backend actions exposed</span></footer>
+    <footer className="page-foot"><span>DuoAI Studio · Python Master Orchestrator</span><span>Live planning and isolated worker execution</span></footer>
   </div>;
 }
 
