@@ -8,6 +8,7 @@ let backend=null;
 let backendReady=null;
 let nextId=1;
 const pending=new Map();
+const allowedMethods=new Set(["health","providers.list","providers.save","providers.remove","providers.test","projects.list","projects.create","projects.get","projects.update","memory.get","memory.save","master.plan","master.run","runs.list","runs.list_all"]);
 
 function rejectPending(message){
   for(const item of pending.values()) item.reject(new Error(message));
@@ -53,7 +54,7 @@ function startBackend(){
   return backendReady;
 }
 async function callBackend(method,args={}){
-  if(typeof method!=="string"||method.length>80)throw new Error("Invalid backend operation.");
+  if(typeof method!=="string"||!allowedMethods.has(method))throw new Error("Unsupported backend operation.");
   if(!args||typeof args!=="object"||Array.isArray(args)||JSON.stringify(args).length>1_000_000)throw new Error("Invalid backend arguments.");
   await startBackend();
   if(!backend||backend.exitCode!==null)throw new Error("Python backend is not running.");
@@ -70,6 +71,10 @@ function createWindow(){
   const win=new BrowserWindow({width:1480,height:940,minWidth:1120,minHeight:720,backgroundColor:"#F4F5F7",title:"DuoAI Studio",show:false,webPreferences:{preload:path.join(__dirname,"preload.cjs"),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true,webviewTag:false}});
   win.once("ready-to-show",()=>win.show());
   win.webContents.setWindowOpenHandler(()=>({action:"deny"}));
+  win.webContents.on("will-navigate",(event,url)=>{
+    const allowed=dev?url.startsWith("http://127.0.0.1:5173/"):url.startsWith("file://");
+    if(!allowed)event.preventDefault();
+  });
   if(dev)win.loadURL("http://127.0.0.1:5173");
   else win.loadFile(path.join(__dirname,"..","dist","index.html"));
 }
