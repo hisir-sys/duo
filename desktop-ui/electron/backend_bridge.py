@@ -189,6 +189,7 @@ def dispatch(method, args):
 
 def main():
     for line in sys.stdin:
+        request_id = None
         try:
             request = json.loads(line)
             request_id = request.get("id")
