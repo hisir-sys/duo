@@ -376,6 +376,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [low, setLow] = useState(false);
   const [backendStatus,setBackendStatus]=useState<"checking"|"online"|"offline">("checking");
+  const [projectStats,setProjectStats]=useState({projects:0,tasks:0,outputs:0});
   const [page, setPage] = useState<"Home" | "Projects" | "Agents" | "Master Control Room" | "Workspace" | "Review Center" | "Settings">("Home");
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("duoai-theme");
@@ -388,6 +389,19 @@ export default function App() {
     const timer=window.setInterval(ping,15000);
     return ()=>{active=false;window.clearInterval(timer);};
   }, []);
+  useEffect(()=>{
+    let active=true;
+    const load=()=>window.duoDesktop.backend.invoke("projects.list").then(data=>{
+      if(!active)return;
+      const projects=data.projects||[];
+      const tasks=projects.reduce((sum:number,p:any)=>sum+(p.tasks?.length||0),0);
+      const outputs=projects.reduce((sum:number,p:any)=>sum+(p.tasks||[]).filter((t:any)=>!!t.output).length,0);
+      setProjectStats({projects:projects.length,tasks,outputs});
+    }).catch(()=>{});
+    load();
+    const timer=window.setInterval(load,12000);
+    return ()=>{active=false;window.clearInterval(timer);};
+  },[]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("duoai-theme", theme);
@@ -439,10 +453,10 @@ export default function App() {
           </section>
 
           <section className="dashboard-kpis" aria-label="Workspace metrics">
-            <article className="kpi-card"><span>PROJECTS</span><strong>04</strong><small><i className="kpi-dot sage"/> 3 shown below</small><span className="kpi-index">01</span></article>
-            <article className="kpi-card"><span>OPEN TASKS</span><strong>12</strong><small><i className="kpi-dot blue"/> Across 4 projects</small><span className="kpi-index">02</span></article>
-            <article className="kpi-card"><span>IN REVIEW</span><strong>03</strong><small><i className="kpi-dot amber"/> Awaiting attention</small><span className="kpi-index">03</span></article>
-            <article className="kpi-card kpi-progress"><span>COMPLETION</span><strong>78<small>%</small></strong><div className="kpi-track"><i/></div><small>Illustrative project average</small><span className="kpi-index">04</span></article>
+            <article className="kpi-card"><span>PROJECTS</span><strong>{String(projectStats.projects).padStart(2,"0")}</strong><small><i className="kpi-dot sage"/> Stored locally</small><span className="kpi-index">01</span></article>
+            <article className="kpi-card"><span>SAVED TASKS</span><strong>{String(projectStats.tasks).padStart(2,"0")}</strong><small><i className="kpi-dot blue"/> From local projects</small><span className="kpi-index">02</span></article>
+            <article className="kpi-card"><span>TASK OUTPUTS</span><strong>{String(projectStats.outputs).padStart(2,"0")}</strong><small><i className="kpi-dot amber"/> Saved worker results</small><span className="kpi-index">03</span></article>
+            <article className="kpi-card kpi-progress"><span>OUTPUT RATE</span><strong>{projectStats.tasks?Math.round(projectStats.outputs/projectStats.tasks*100):0}<small>%</small></strong><div className="kpi-track"><i style={{width:(projectStats.tasks?Math.round(projectStats.outputs/projectStats.tasks*100):0)+"%"}}/></div><small>Saved outputs / saved tasks</small><span className="kpi-index">04</span></article>
           </section>
 
           <section className="dashboard-main-grid">
