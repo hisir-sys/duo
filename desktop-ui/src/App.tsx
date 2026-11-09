@@ -339,19 +339,40 @@ export default function App() {
   }, [theme]);
   const visible = updates.filter((row) => row.join(" ").toLowerCase().includes(query.toLowerCase()));
   return <div className={low ? "shell low" : "shell"}>
-    <aside className="sidebar">
-      <div className="brand"><img src="./duo-mark.svg" alt=""/><b>DuoAI <small>STUDIO</small></b></div>
-      <div className="workspace"><span>D</span><div><b>Personal workspace</b><small>Free workspace</small></div><ChevronDown size={14}/></div>
-      <nav>
-        <label>OVERVIEW</label><Nav icon={LayoutDashboard} label="Home" active={page === "Home"} onClick={() => { setPage("Home"); setQuery(""); }}/><Nav icon={FolderKanban} label="Projects" active={page === "Projects"} onClick={() => { setPage("Projects"); setQuery(""); }}/>
-        <label>TEAM</label><Nav icon={Users} label="Agents" active={page === "Agents"} onClick={() => { setPage("Agents"); setQuery(""); }}/><Nav icon={Workflow} label="Master Control Room" active={page === "Master Control Room"} onClick={() => { setPage("Master Control Room"); setQuery(""); }}/>
-        <label>WORK</label><Nav icon={BookOpen} label="Workspace" active={page === "Workspace"} onClick={() => { setPage("Workspace"); setQuery(""); }}/><Nav icon={GitPullRequest} label="Review Center" active={page === "Review Center"} onClick={() => { setPage("Review Center"); setQuery(""); }}/>
-        <label>ACCOUNT</label><Nav icon={Settings2} label="Settings" active={page === "Settings"} onClick={() => { setPage("Settings"); setQuery(""); }}/>
-      </nav>
-      <div className="side-bottom"><div className="profile"><span>S</span><div><b>Studio owner</b><small>Local preview</small></div></div></div>
+    <aside className="nav-dock" aria-label="Main navigation">
+      <div className="nav-rail">
+        <div className="rail-brand" aria-label="DuoAI Studio"><img src="./duo-mark.svg" alt=""/></div>
+        <button className={page === "Home" || page === "Projects" || page === "Agents" || page === "Master Control Room" || page === "Workspace" || page === "Review Center" ? "rail-button rail-home active" : "rail-button rail-home"} aria-label="Open Home navigation" aria-expanded="true" title="Home">
+          <LayoutDashboard size={19}/>
+        </button>
+        <div className="rail-divider"/>
+        <span className="rail-glyph" title="Library · coming later"><BookOpen size={18}/></span>
+        <span className="rail-glyph" title="Shared projects · coming later"><FolderKanban size={18}/></span>
+        <span className="rail-glyph" title="Connections · coming later"><Workflow size={18}/></span>
+        <span className="rail-glyph" title="Activity · coming later"><Activity size={18}/></span>
+        <div className="rail-spacer"/>
+        <button className={page === "Settings" ? "rail-button active" : "rail-button"} aria-label="Settings" title="Settings" onClick={() => { setPage("Settings"); setQuery(""); }}><Settings2 size={18}/></button>
+        <button className="rail-button rail-theme" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Light mode" : "Dark mode"} onClick={() => setTheme(current => current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={18}/> : <Moon size={18}/>}</button>
+      </div>
+      <div className="nav-flyout">
+        <div className="flyout-workspace"><span className="workspace-avatar">D</span><span><b>Personal workspace</b><small>Free workspace</small></span><ChevronDown size={14}/></div>
+        <div className="flyout-heading"><span>HOME</span><small>WORKSPACE</small></div>
+        <nav className="flyout-links" aria-label="Workspace destinations">
+          <button className={page === "Home" ? "flyout-link active" : "flyout-link"} onClick={() => { setPage("Home"); setQuery(""); }}><LayoutDashboard size={16}/><span>Dashboard</span></button>
+          <button className={page === "Projects" ? "flyout-link active" : "flyout-link"} onClick={() => { setPage("Projects"); setQuery(""); }}><FolderKanban size={16}/><span>Projects</span></button>
+          <button className={page === "Agents" ? "flyout-link active" : "flyout-link"} onClick={() => { setPage("Agents"); setQuery(""); }}><Users size={16}/><span>Agents</span></button>
+          <button className={page === "Master Control Room" ? "flyout-link active" : "flyout-link"} onClick={() => { setPage("Master Control Room"); setQuery(""); }}><Workflow size={16}/><span>Master Orchestrator</span><small>CORE</small></button>
+          <button className={page === "Workspace" ? "flyout-link active" : "flyout-link"} onClick={() => { setPage("Workspace"); setQuery(""); }}><Code2 size={16}/><span>Workspace</span></button>
+          <button className={page === "Review Center" ? "flyout-link active" : "flyout-link"} onClick={() => { setPage("Review Center"); setQuery(""); }}><GitPullRequest size={16}/><span>Review Center</span><i className="flyout-count">3</i></button>
+        </nav>
+        <div className="flyout-subheading">WORK QUEUE</div>
+        <button className={page === "Workspace" ? "flyout-link compact active" : "flyout-link compact"} onClick={() => { setPage("Workspace"); setQuery(""); }}><ListChecks size={15}/><span>Tasks</span><small>IN WORKSPACE</small></button>
+        <label className="flyout-search"><Search size={15}/><input aria-label="Search current view" placeholder="Search this view..." value={query} onChange={e => setQuery(e.target.value)}/><kbd>/</kbd></label>
+        <div className="flyout-foot"><span className="connection-dot"/><span>Local preview</span><small>BACKEND PENDING</small></div>
+      </div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><div className="search"><Search size={15}/><input placeholder={page === "Settings" ? "Search settings..." : page === "Projects" ? "Search projects..." : page === "Agents" ? "Search agent profiles..." : page === "Master Control Room" ? "Search workflow roles..." : page === "Workspace" ? "Search files and tasks..." : page === "Review Center" ? "Search proposals..." : "Search activity..."} value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><button className="icon-btn theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={()=>setTheme(current=>current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className="bridge"><i/>Backend bridge pending</span><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
       {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content editorial-dashboard">
           <section className="dashboard-heading">
             <div>
