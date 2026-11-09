@@ -80,6 +80,8 @@ const controlNodes = [
 function MasterControlRoom({ query }: { query:string }) {
   const [goal,setGoal]=useState("");
   const [projectRoot,setProjectRoot]=useState("");
+  const [projects,setProjects]=useState<any[]>([]);
+  const [projectId,setProjectId]=useState("adhoc");
   const [plan,setPlan]=useState<any>(null);
   const [run,setRun]=useState<any>(null);
   const [busy,setBusy]=useState<"plan"|"run"|"">("");
@@ -93,17 +95,18 @@ function MasterControlRoom({ query }: { query:string }) {
   const runWorkers=async()=>{
     if(!plan)return;
     setBusy("run");setError("");setStatus("Running isolated worker agents. This may take a few minutes…");
-    try{const data=await window.duoDesktop.backend.invoke("master.run",{plan,project_id:"adhoc"});setRun(data.run);setStatus("Worker run finished. Proposed files remain isolated for review.");}
+    try{const data=await window.duoDesktop.backend.invoke("master.run",{plan,project_id:projectId});setRun(data.run);setStatus("Worker run finished. Proposed files remain isolated for review.");}
     catch(e){setError((e as Error).message);setStatus("");}finally{setBusy("");}
   };
   const visible=controlNodes.filter(node=>[node.name,node.role,node.description,node.type].join(" ").toLowerCase().includes(query.toLowerCase()));
   const stages=plan?.stages??[];
+  useEffect(()=>{window.duoDesktop.backend.invoke("projects.list").then(data=>setProjects(data.projects||[])).catch(()=>{});},[]);
   return <div className="content control-content">
     <section className="welcome control-welcome"><div><label>— MASTER ORCHESTRATION</label><h1>Master Control Room.</h1><p>Plan work with the Python Master Orchestrator, then delegate approved tasks to isolated specialist workers.</p></div><span className="preview">● LIVE BACKEND OPERATIONS</span></section>
     <section className="master-console">
       <div className="master-console-head"><div><span className="section-kicker">01 — NEW EXECUTION</span><h2>What should Duo work on?</h2><p>The Master creates a dependency-aware plan using your configured providers.</p></div><span className="master-console-mark"><BrainCircuit size={21}/></span></div>
       <textarea value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Describe the goal, constraints, expected result, and any important context…" rows={4}/>
-      <label className="master-path-label">OPTIONAL PROJECT FOLDER <span>READ-ONLY CONTEXT INSPECTION</span></label>
+      <label className="master-path-label">SAVE RUN UNDER PROJECT</label><select className="master-project-select" value={projectId} onChange={e=>setProjectId(e.target.value)}><option value="adhoc">Ad hoc run · no project</option>{projects.map(project=><option key={project.id} value={project.id}>{project.name}</option>)}</select>\n      <label className="master-path-label">OPTIONAL PROJECT FOLDER <span>READ-ONLY CONTEXT INSPECTION</span></label>
       <input className="master-path-input" value={projectRoot} onChange={e=>setProjectRoot(e.target.value)} placeholder="e.g. /home/user/Projects/my-app"/>
       <div className="master-console-actions"><small><LockKeyhole size={13}/> Provider keys stay in the OS credential vault</small><button onClick={makePlan} disabled={!!busy||!goal.trim()}>{busy==="plan"?<LoaderCircle size={15} className="spin"/>:<Sparkles size={15}/>} Create plan</button></div>
       {status&&<p className="master-status"><CircleDot size={13}/>{status}</p>}
