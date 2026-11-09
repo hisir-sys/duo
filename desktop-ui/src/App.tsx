@@ -337,7 +337,6 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("duoai-theme", theme);
   }, [theme]);
-  const bars = [32, 48, 39, 66, 54, 78, 62];
   const visible = updates.filter((row) => row.join(" ").toLowerCase().includes(query.toLowerCase()));
   return <div className={low ? "shell low" : "shell"}>
     <aside className="sidebar">
