@@ -191,6 +191,18 @@ const reviewItems = [
   { id:"provider-config", title:"Add provider configuration validation", project:"API integration", author:"Coding Agent", branch:"feature/provider-validation", status:"Needs review", files:2, additions:31, deletions:4, summary:"Adds clearer validation messages for incomplete provider settings.", findings:[{level:"Warning",title:"Credential handling needs confirmation",detail:"Confirm secrets are never written to logs or returned in validation messages."},{level:"Note",title:"Input validation added",detail:"Required fields are checked before the provider configuration is accepted."}], diff:[{file:"backend/providers/config.py",change:"@@ validation\n+ def validate_provider(config):\n+     required = (\"provider\", \"model\")\n+     missing = [key for key in required if not config.get(key)]\n+     if missing:\n+         raise ValueError(\"Missing provider settings\")"}]},
   { id:"docs-refresh", title:"Update project setup guide", project:"Website refresh", author:"Research Agent", branch:"docs/setup-guide", status:"Approved", files:1, additions:18, deletions:3, summary:"Clarifies the local setup steps and documents the current development workflow.", findings:[{level:"Note",title:"Documentation-only change",detail:"No application runtime code is changed in this proposal."}], diff:[{file:"README.md",change:"@@ local setup\n+ ## Local development\n+ Install dependencies, then run the desktop UI from its own folder.\n+ The Python backend remains a separate process during this preview phase."}]}
 ];
+function LiveWorkerRuns() {
+  const [runs,setRuns]=useState<any[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+  const load=async()=>{setLoading(true);setError("");try{const data=await window.duoDesktop.backend.invoke("runs.list_all");setRuns(data.runs||[]);}catch(e){setError((e as Error).message);}finally{setLoading(false);}};
+  useEffect(()=>{load();},[]);
+  return <section className="live-runs-panel"><header><div><span className="section-kicker">LIVE PYTHON WORKER RUNS</span><h2>Generated proposals</h2><p>Real isolated worker outputs saved by the Python backend.</p></div><button onClick={load} disabled={loading}><RefreshCw size={14} className={loading?"spin":""}/> Refresh</button></header>
+    {error&&<p className="projects-error">{error}</p>}
+    {loading&&!runs.length?<p className="live-runs-empty">Loading saved worker runs…</p>:!runs.length?<p className="live-runs-empty">No worker runs yet. Create a plan and run workers in Master Orchestrator to see proposals here.</p>:<div className="live-runs-list">{runs.map(run=><article className="live-run-card" key={run.run_id}><div className="live-run-head"><span><b>Run {run.run_id.slice(0,8)}</b><small>{run.project_id==="adhoc"?"Ad hoc run":"Project "+run.project_id}</small></span><span className="live-run-count">{run.completed}/{run.results.length} completed</span></div><div className="live-run-results">{run.results.map((item:any)=><details key={item.task_id}><summary><span>{item.task_id} · {item.role}</span><em className={item.status}>{item.status}</em></summary><p>{item.error||item.output||"No worker output."}</p>{item.artifacts?.length>0&&<small>Proposed artifacts: {item.artifacts.join(", ")}</small>}</details>)}</div><small className="live-run-safety">Source project modified: {String(run.source_project_modified)} · Commands executed: {String(run.commands_executed)}</small></article>)}</div>}
+  </section>;
+}
+
 function ReviewCenter({ query }: { query: string }) {
   const [items,setItems] = useState(reviewItems);
   const [selectedId,setSelectedId] = useState("desktop-ui");
@@ -201,7 +213,7 @@ function ReviewCenter({ query }: { query: string }) {
   const decide = (status:"Approved" | "Changes requested") => { if(!selected) return; setItems(current=>current.map(item=>item.id===selected.id?{...item,status}:item)); };
   return <div className="content review-content">
     <section className="welcome review-welcome"><div><label>— QUALITY GATE</label><h1>Review before it ships.</h1><p>Inspect proposed changes, understand findings and record a review decision.</p></div><span className="preview">● UI PREVIEW · SAMPLE PROPOSALS</span></section>
-    <section className="review-summary">
+    <LiveWorkerRuns/>\n    <section className="review-summary">
       <article><span className="review-summary-icon pending"><GitPullRequest size={17}/></span><div><strong>{items.filter(x=>x.status==="Needs review").length.toString().padStart(2,"0")}</strong><small>Awaiting review</small></div></article>
       <article><span className="review-summary-icon approved"><Check size={17}/></span><div><strong>{items.filter(x=>x.status==="Approved").length.toString().padStart(2,"0")}</strong><small>Approved previews</small></div></article>
       <article><span className="review-summary-icon findings"><AlertTriangle size={17}/></span><div><strong>{items.reduce((n,x)=>n+x.findings.filter(f=>f.level==="Warning").length,0).toString().padStart(2,"0")}</strong><small>Warnings to inspect</small></div></article>
