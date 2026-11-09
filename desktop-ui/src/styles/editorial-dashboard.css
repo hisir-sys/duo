@@ -471,3 +471,57 @@ main {
 @keyframes provider-spin { to { transform:rotate(360deg); } }
 :root[data-theme="dark"] .provider-editor { background:rgba(255,255,255,.025); }
 @media(max-width:720px) { .provider-settings-layout { grid-template-columns:1fr; } .provider-picker { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Master Orchestrator execution workspace */
+.master-console,.master-plan-panel,.master-run-panel { margin:0 0 18px; padding:22px; border:1px solid var(--border); border-radius:17px; background:var(--surface); box-shadow:0 7px 24px rgba(30,42,33,.035),inset 0 1px 0 rgba(255,255,255,.72); }
+.master-console-head,.master-run-panel>header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.master-console-head h2,.master-run-panel h2 { margin:7px 0 5px; color:var(--text-strong); font-size:20px; letter-spacing:-.6px; }
+.master-console-head p { margin:0; color:var(--muted); font-size:11px; }
+.master-console-mark { width:42px; height:42px; display:grid; place-items:center; border:1px solid var(--border); border-radius:13px; background:var(--blue-soft); color:var(--blue); }
+.master-console textarea { width:100%; margin-top:18px; padding:13px 14px; resize:vertical; border:1px solid var(--border); border-radius:12px; outline:none; background:var(--surface-muted); color:var(--text); font:inherit; font-size:12px; line-height:1.65; }
+.master-console textarea:focus,.master-path-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
+.master-path-label { display:flex; justify-content:space-between; margin:13px 0 7px; color:var(--muted); font:650 8px "JetBrains Mono",monospace; letter-spacing:.8px; }
+.master-path-label span { color:var(--soft); font-size:7px; }
+.master-path-input { width:100%; height:36px; padding:0 11px; border:1px solid var(--border); border-radius:9px; outline:none; background:var(--surface-muted); color:var(--text); font:inherit; font-size:10px; }
+.master-console-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:15px; }
+.master-console-actions small,.master-safety-note { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:9px; }
+.master-console-actions button,.master-plan-panel .editorial-panel-head>button { display:inline-flex; align-items:center; gap:7px; min-height:36px; padding:0 13px; border:1px solid var(--text-strong); border-radius:9px; background:var(--text-strong); color:var(--surface); font-size:10px; font-weight:650; cursor:pointer; }
+.master-console-actions button:disabled,.master-plan-panel button:disabled { opacity:.45; cursor:not-allowed; }
+.master-status,.master-error { display:flex; align-items:center; gap:7px; margin:13px 0 0; color:var(--muted); font-size:10px; }
+.master-error { color:#b16d62; }
+.master-stage-list { display:grid; gap:14px; margin-top:18px; }
+.master-stage { display:grid; grid-template-columns:82px 1fr; gap:12px; }
+.master-stage-label { padding-top:15px; color:var(--muted); font:650 8px "JetBrains Mono",monospace; letter-spacing:.7px; }
+.master-stage>div { display:grid; gap:8px; }
+.master-task-card { padding:13px 14px; border:1px solid var(--border); border-radius:12px; background:var(--surface-muted); }
+.master-task-card>div { display:flex; align-items:center; gap:10px; }
+.master-role-icon { width:30px; height:30px; display:grid; place-items:center; border-radius:9px; background:var(--blue-soft); color:var(--blue); }
+.master-role-icon.testing { background:rgba(111,156,119,.12); color:#6f9c77; }
+.master-role-icon.review { background:rgba(180,123,109,.12); color:#b47b6d; }
+.master-role-icon.research { background:rgba(127,137,157,.12); color:#7f899d; }
+.master-task-card>div>span:last-child { display:grid; gap:4px; }
+.master-task-card b { color:var(--text-strong); font-size:11px; }
+.master-task-card small { color:var(--muted); font-size:9px; }
+.master-task-card p { margin:10px 0; color:var(--muted); font-size:10px; line-height:1.6; }
+.master-task-card .master-criteria { display:block; padding-top:9px; border-top:1px solid var(--border); color:var(--soft); font:8px/1.6 "JetBrains Mono",monospace; }
+.master-safety-note { margin:16px 0 0; padding-top:13px; border-top:1px solid var(--border); line-height:1.55; }
+.master-run-id { padding:5px 8px; border:1px solid var(--border); border-radius:7px; color:var(--muted); font:9px "JetBrains Mono",monospace; }
+.master-run-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; }
+.master-run-metrics article { display:grid; gap:4px; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-muted); }
+.master-run-metrics b { color:var(--text-strong); font-size:22px; font-weight:500; }
+.master-run-metrics small { color:var(--muted); font-size:9px; }
+.master-result { padding:12px 0; border-top:1px solid var(--border); }
+.master-result>div { display:flex; align-items:center; justify-content:space-between; }
+.master-result>div>b { color:var(--text-strong); font:10px "JetBrains Mono",monospace; }
+.master-result>small { display:block; margin-top:5px; color:var(--muted); font-size:9px; }
+.master-result-status { padding:3px 7px; border-radius:6px; background:var(--surface-muted); color:var(--muted); font:8px "JetBrains Mono",monospace; text-transform:uppercase; }
+.master-result-status.completed { color:#648b6d; background:rgba(111,156,119,.12); }
+.master-result-status.failed { color:#b16d62; background:rgba(180,123,109,.12); }
+.master-result p { color:var(--muted); font-size:10px; }
+.master-result details { margin-top:8px; }
+.master-result summary { color:var(--blue); font-size:9px; cursor:pointer; }
+.master-result pre { max-height:260px; overflow:auto; padding:11px; border:1px solid var(--border); border-radius:9px; background:var(--surface-muted); color:var(--text); white-space:pre-wrap; font:9px/1.6 "JetBrains Mono",monospace; }
+.master-workers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:18px 0; }
+.master-workers .workflow-node { min-height:68px; cursor:default; }
+:root[data-theme="dark"] .master-console,:root[data-theme="dark"] .master-plan-panel,:root[data-theme="dark"] .master-run-panel { background:rgba(255,255,255,.025); box-shadow:0 10px 30px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.035); }
+@media(max-width:760px) { .master-stage { grid-template-columns:1fr; gap:5px; } .master-stage-label { padding-top:0; } .master-workers { grid-template-columns:1fr; } .master-console-actions { align-items:flex-start; flex-direction:column; } }
