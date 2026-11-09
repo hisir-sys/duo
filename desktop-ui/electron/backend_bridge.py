@@ -184,6 +184,13 @@ def dispatch(method, args):
             raise ValueError("Invalid project identifier.")
         return {"runs": _list_runs(project_id)}
 
+    if method == "runs.list_all":
+        project_ids = ["adhoc"] + [project["id"] for project in core.list_projects()]
+        runs = []
+        for project_id in project_ids:
+            runs.extend(_list_runs(project_id))
+        return {"runs": runs[-60:]}
+
     raise ValueError("Unsupported backend operation.")
 
 
