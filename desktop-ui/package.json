@@ -17,8 +17,8 @@
     "lucide-react": "0.554.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "@astryxdesign/core": "0.7.12",
-    "@astryxdesign/theme-neutral": "0.7.12",
+    "@astryxdesign/core": "0.7.11",
+    "@astryxdesign/theme-neutral": "0.7.11",
     "@stylexjs/stylex": "0.19.0"
   },
   "devDependencies": {
@@ -30,6 +30,6 @@
     "typescript": "5.9.3",
     "vite": "7.2.2",
     "wait-on": "8.0.4",
-    "@astryxdesign/cli": "0.7.12"
+    "@astryxdesign/cli": "0.7.11"
   }
 }
