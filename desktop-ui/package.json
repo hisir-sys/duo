@@ -8,14 +8,18 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
     "build": "tsc --noEmit && vite build",
     "start": "electron .",
-    "dev:linux": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron --no-sandbox .\""
+    "dev:linux": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron --no-sandbox .\"",
+    "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "5.2.6",
     "@fontsource/jetbrains-mono": "5.2.6",
     "lucide-react": "0.554.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "@astryxdesign/core": "0.7.12",
+    "@astryxdesign/theme-neutral": "0.7.12",
+    "@stylexjs/stylex": "0.19.0"
   },
   "devDependencies": {
     "@types/react": "19.2.2",
@@ -25,6 +29,7 @@
     "electron": "39.2.7",
     "typescript": "5.9.3",
     "vite": "7.2.2",
-    "wait-on": "8.0.4"
+    "wait-on": "8.0.4",
+    "@astryxdesign/cli": "0.7.12"
   }
 }
