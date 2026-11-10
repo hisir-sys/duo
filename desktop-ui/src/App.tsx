@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@astryxdesign/core/Button";
 import { Activity, Bell, BookOpen, Check, ChevronDown, Code2, FolderKanban, GitPullRequest, LayoutDashboard, Moon, Search, Settings2, ShieldCheck, Sun, Users, Workflow, Bot, BrainCircuit, FlaskConical, Sparkles, ArrowUpRight, CircleDot, GitBranch, Radio, ListChecks, FileCode2, FileText, Folder, ChevronRight, Plus, Play, Terminal, CircleCheck, CircleDashed, AlertTriangle, MessageSquare, FileDiff, GitCommit, KeyRound, RefreshCw, LoaderCircle, LockKeyhole } from "lucide-react";
 
 
@@ -456,7 +457,7 @@ export default function App() {
       </div>
     </aside>
     <main>
-      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className={"bridge "+backendStatus}><i/>{backendStatus==="online"?"Python core connected":backendStatus==="checking"?"Connecting to Python…":"Python core offline"}</span><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
+      <header className="topbar"><div className="crumb">Overview <i>/</i> <b>{page}</b></div><div className="top-actions"><span className={"bridge "+backendStatus}><i/>{backendStatus==="online"?"Python core connected":backendStatus==="checking"?"Connecting to Python…":"Python core offline"}</span><Button variant="secondary" size="md" onClick={() => setPage("Projects")}>New project</Button><button className="icon-btn" aria-label="Notifications"><Bell size={17}/></button><span className="topbar-mark" aria-label="Duo Studio">D</span></div></header>
       {page === "Settings" ? <SettingsScreen query={query} theme={theme} onThemeChange={setTheme} lowEffects={low} onLowEffectsChange={setLow}/> : page === "Projects" ? <ProjectsScreen query={query} onOpenWorkspace={() => { setPage("Workspace"); setQuery(""); }}/> : page === "Agents" ? <AgentsScreen query={query}/> : page === "Master Control Room" ? <MasterControlRoom query={query}/> : page === "Workspace" ? <WorkspaceScreen query={query}/> : page === "Review Center" ? <ReviewCenter query={query}/> : <div className="content editorial-dashboard">
           <section className="dashboard-heading">
             <div>
