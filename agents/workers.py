@@ -10,6 +10,7 @@ import os
 import re
 import tempfile
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from pathlib import Path, PureWindowsPath
 from typing import Callable, Mapping
@@ -20,6 +21,8 @@ MAX_OUTPUT_CHARS = 100_000
 MAX_ARTIFACTS = 30
 MAX_ARTIFACT_CHARS = 1_000_000
 MAX_TOTAL_ARTIFACT_CHARS = 5_000_000
+MAX_PARALLEL_WORKERS = 3
+MAX_WORKER_ATTEMPTS = 2
 PROJECT_ID_RE = re.compile(r"^[a-f0-9]{8}$")
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
 ARTIFACT_RE = re.compile(
@@ -193,62 +196,128 @@ class MasterWorkerTeam:
         self.workspace_root = Path(workspace_root)
 
     def run(self, plan, *, cfg: Mapping, project_id: str = "adhoc",
-            project_context: str = "") -> dict:
+            project_context: str = "", max_parallel: int = MAX_PARALLEL_WORKERS) -> dict:
+        """Run dependency stages concurrently, with bounded retries and durable checkpoints.
+
+        Tasks in the same validated DAG stage have no dependencies on one another,
+        so they may run concurrently. Later stages wait for all earlier dependencies.
+        Worker output remains proposal-only and is never applied to the source project.
+        """
         if project_id != "adhoc" and not PROJECT_ID_RE.fullmatch(str(project_id)):
             raise ValueError("Invalid project identifier.")
         if not plan.tasks:
             raise ValueError("The Master plan contains no tasks.")
+        if isinstance(max_parallel, bool) or not isinstance(max_parallel, int) or not 1 <= max_parallel <= 12:
+            raise ValueError("Worker concurrency must be between 1 and 12.")
+
         run_id = uuid.uuid4().hex
         run_root = self.workspace_root / project_id / "agents" / run_id
         run_root.mkdir(parents=True, exist_ok=False)
         resolved_root = run_root.resolve()
-        if resolved_root != self.workspace_root.resolve() and self.workspace_root.resolve() not in resolved_root.parents:
+        workspace_root = self.workspace_root.resolve()
+        if resolved_root != workspace_root and workspace_root not in resolved_root.parents:
             raise ValueError("Worker workspace escaped the configured workspace root.")
 
         tasks = {task.id: task for task in plan.tasks}
         results: dict[str, WorkerResult] = {}
-        for stage in plan.stages:
-            for task_id in stage:
-                task = tasks[task_id]
-                failed_dependencies = [
-                    dependency for dependency in task.depends_on
-                    if dependency not in results or results[dependency].status != "completed"
-                ]
-                task_root = run_root / _safe_component(task_id, "task id")
-                task_root.mkdir(parents=True, exist_ok=False)
-                if failed_dependencies:
-                    result = WorkerResult(
-                        task_id=task_id, role=task.role, provider=task.provider,
-                        status="blocked", output="Skipped because a dependency did not complete: "
-                        + ", ".join(failed_dependencies), workspace=str(task_root),
+        attempts: dict[str, int] = {}
+        state_path = run_root / "run.json"
+
+        def checkpoint(status: str) -> dict:
+            summary = {
+                "run_id": run_id,
+                "project_id": project_id,
+                "workspace": str(run_root),
+                "status": status,
+                "max_parallel": max_parallel,
+                "results": [results[task_id].as_dict() for task_id in tasks if task_id in results],
+                "completed": sum(item.status == "completed" for item in results.values()),
+                "failed": sum(item.status == "failed" for item in results.values()),
+                "blocked": sum(item.status == "blocked" for item in results.values()),
+                "pending": len(tasks) - len(results),
+                "source_project_modified": False,
+                "commands_executed": False,
+            }
+            _atomic_write(state_path, json.dumps(summary, ensure_ascii=False, indent=2))
+            return summary
+
+        def execute(task_id: str) -> tuple[WorkerResult, int]:
+            task = tasks[task_id]
+            task_root = run_root / _safe_component(task_id, "task id")
+            task_root.mkdir(parents=True, exist_ok=False)
+            agent = WorkerAgent(task.role, self.ask_fn)
+            prior = tuple(results[item] for item in task.depends_on)
+            last_error = "Worker failed."
+            for attempt in range(1, MAX_WORKER_ATTEMPTS + 1):
+                try:
+                    result = agent.run(
+                        task, goal=plan.goal, provider=task.provider, cfg=cfg,
+                        project_context=project_context, prior_results=prior,
+                        workspace=task_root,
                     )
-                else:
-                    agent = WorkerAgent(task.role, self.ask_fn)
-                    prior = tuple(results[item] for item in task.depends_on)
-                    try:
-                        result = agent.run(
-                            task, goal=plan.goal, provider=task.provider, cfg=cfg,
-                            project_context=project_context, prior_results=prior,
-                            workspace=task_root,
-                        )
-                    except Exception as error:
+                    return result, attempt
+                except Exception as error:
+                    last_error = str(error)[:2000]
+            return WorkerResult(
+                task_id=task_id, role=task.role, provider=task.provider,
+                status="failed", output="", workspace=str(task_root), error=last_error,
+            ), MAX_WORKER_ATTEMPTS
+
+        checkpoint("running")
+        try:
+            # A stage is a set of mutually independent tasks. Run each stage in
+            # parallel, then persist results before allowing dependent stages.
+            for stage in plan.stages:
+                ready = []
+                for task_id in stage:
+                    task = tasks[task_id]
+                    failed_dependencies = [
+                        dependency for dependency in task.depends_on
+                        if dependency not in results or results[dependency].status != "completed"
+                    ]
+                    if failed_dependencies:
+                        task_root = run_root / _safe_component(task_id, "task id")
+                        task_root.mkdir(parents=True, exist_ok=False)
                         result = WorkerResult(
                             task_id=task_id, role=task.role, provider=task.provider,
-                            status="failed", output="", workspace=str(task_root),
-                            error=str(error)[:2000],
+                            status="blocked",
+                            output="Skipped because a dependency did not complete: " + ", ".join(failed_dependencies),
+                            workspace=str(task_root),
                         )
-                results[task_id] = result
-                _atomic_write(task_root / "result.json", json.dumps(result.as_dict(), ensure_ascii=False, indent=2))
-        summary = {
-            "run_id": run_id,
-            "project_id": project_id,
-            "workspace": str(run_root),
-            "results": [results[task_id].as_dict() for task_id in tasks],
-            "completed": sum(item.status == "completed" for item in results.values()),
-            "failed": sum(item.status == "failed" for item in results.values()),
-            "blocked": sum(item.status == "blocked" for item in results.values()),
-            "source_project_modified": False,
-            "commands_executed": False,
-        }
-        _atomic_write(run_root / "run.json", json.dumps(summary, ensure_ascii=False, indent=2))
-        return summary
+                        results[task_id] = result
+                        attempts[task_id] = 0
+                        _atomic_write(task_root / "result.json", json.dumps(result.as_dict(), ensure_ascii=False, indent=2))
+                    else:
+                        ready.append(task_id)
+
+                if ready:
+                    with ThreadPoolExecutor(max_workers=min(max_parallel, len(ready)), thread_name_prefix="duo-worker") as pool:
+                        futures = {pool.submit(execute, task_id): task_id for task_id in ready}
+                        for future in as_completed(futures):
+                            task_id = futures[future]
+                            try:
+                                result, attempt_count = future.result()
+                            except Exception as error:
+                                task = tasks[task_id]
+                                task_root = run_root / _safe_component(task_id, "task id")
+                                result = WorkerResult(
+                                    task_id=task_id, role=task.role, provider=task.provider,
+                                    status="failed", output="", workspace=str(task_root),
+                                    error=str(error)[:2000],
+                                )
+                                attempt_count = MAX_WORKER_ATTEMPTS
+                            results[task_id] = result
+                            attempts[task_id] = attempt_count
+                            task_root = run_root / _safe_component(task_id, "task id")
+                            _atomic_write(task_root / "result.json", json.dumps(result.as_dict(), ensure_ascii=False, indent=2))
+                            checkpoint("running")
+
+            summary = checkpoint("completed" if all(item.status == "completed" for item in results.values()) else "finished_with_errors")
+            summary["attempts"] = attempts
+            _atomic_write(state_path, json.dumps(summary, ensure_ascii=False, indent=2))
+            return summary
+        except BaseException:
+            # Preserve completed results if the app is interrupted; the run
+            # record makes unfinished work visible instead of losing the run.
+            checkpoint("interrupted")
+            raise
