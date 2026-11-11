@@ -1,0 +1,250 @@
+/* DuoAI Studio — dark appearance refinement.
+   Dark mode only: the approved light theme and all application behaviour remain unchanged. */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #101310;
+  --glass: rgba(27, 32, 28, .70);
+  --surface: rgba(32, 38, 33, .82);
+  --surface-muted: rgba(39, 47, 41, .78);
+  --border: rgba(222, 233, 220, .105);
+  --text: #edf2eb;
+  --muted: #aab5a8;
+  --soft: #7f8b80;
+  --blue: #b5c9b4;
+  --blue-soft: rgba(149, 179, 147, .15);
+  --text-strong: #e4ede1;
+  --text-body: #c5d0c3;
+  --sidebar-bg: rgba(22, 28, 23, .72);
+  --topbar-bg: rgba(23, 29, 24, .68);
+  --field-bg: rgba(17, 22, 18, .78);
+  --shadow: 0 18px 48px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255,255,255,.035);
+  --chart-track: #354137;
+  --chart-bar: #829a82;
+  --duo-glass: rgba(28, 35, 29, .62);
+  --duo-glass-strong: rgba(34, 42, 35, .84);
+  --duo-glass-edge: rgba(223, 235, 220, .13);
+  --duo-glass-shadow: 0 22px 60px rgba(0,0,0,.30), inset 0 1px 0 rgba(240,255,237,.075);
+  --duo-ink: #edf2eb;
+  --duo-muted: #aab5a8;
+  --duo-accent: #b7cbb4;
+  --duo-accent-soft: rgba(164, 194, 158, .14);
+  --duo-hover: rgba(180, 207, 174, .10);
+  --duo-line: rgba(225, 237, 221, .095);
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse at 13% -8%, rgba(132, 159, 126, .16), transparent 37%),
+    radial-gradient(ellipse at 92% 10%, rgba(118, 139, 115, .105), transparent 34%),
+    linear-gradient(145deg, #101411 0%, #141a15 48%, #101512 100%);
+  background-attachment: fixed;
+}
+
+:root[data-theme="dark"] .nav-rail {
+  background: linear-gradient(155deg, rgba(42, 51, 43, .78), rgba(22, 29, 24, .70));
+  border-color: rgba(231, 243, 226, .16);
+  box-shadow: 0 24px 64px rgba(0,0,0,.36), inset 0 1px 0 rgba(244,255,240,.13), inset 0 0 0 1px rgba(255,255,255,.018);
+  -webkit-backdrop-filter: blur(38px) saturate(155%);
+  backdrop-filter: blur(38px) saturate(155%);
+}
+:root[data-theme="dark"] .nav-flyout {
+  background: linear-gradient(145deg, rgba(36, 45, 37, .91), rgba(24, 31, 26, .88));
+  border-color: rgba(231, 243, 226, .15);
+  box-shadow: 0 28px 78px rgba(0,0,0,.42), inset 0 1px 0 rgba(244,255,240,.10);
+  -webkit-backdrop-filter: blur(42px) saturate(165%);
+  backdrop-filter: blur(42px) saturate(165%);
+}
+:root[data-theme="dark"] .rail-brand img { filter: drop-shadow(0 2px 9px rgba(0,0,0,.28)); }
+:root[data-theme="dark"] .rail-button { color: #aab7aa; }
+:root[data-theme="dark"] .rail-button:hover,
+:root[data-theme="dark"] .rail-glyph:hover { background: rgba(190, 215, 183, .105); color: #e6efe2; }
+:root[data-theme="dark"] .rail-button.active {
+  color: #e5f0df;
+  background: linear-gradient(145deg, rgba(164, 196, 154, .20), rgba(133, 163, 126, .10));
+  box-shadow: inset 0 0 0 1px rgba(197, 224, 187, .19), 0 5px 18px rgba(0,0,0,.14);
+}
+:root[data-theme="dark"] .flyout-workspace,
+:root[data-theme="dark"] .flyout-search {
+  background: rgba(13, 19, 15, .36);
+  border-color: rgba(225, 238, 220, .12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+}
+:root[data-theme="dark"] .flyout-link { color: #b9c4b7; }
+:root[data-theme="dark"] .flyout-link svg { color: #91a18f; }
+:root[data-theme="dark"] .flyout-link:hover {
+  background: rgba(186, 213, 178, .095);
+  color: #f0f5ec;
+}
+:root[data-theme="dark"] .flyout-link.active {
+  color: #e9f1e5;
+  background: linear-gradient(100deg, rgba(157, 190, 148, .19), rgba(157, 190, 148, .07));
+  box-shadow: inset 2px 0 0 #a9c49f, inset 0 0 0 1px rgba(205,230,195,.07);
+}
+:root[data-theme="dark"] .flyout-link.active svg { color: #c2d8b8; }
+:root[data-theme="dark"] .flyout-search input { color: #edf2eb; }
+:root[data-theme="dark"] .flyout-search input::placeholder { color: #7e8c7e; }
+
+:root[data-theme="dark"] .topbar {
+  background: rgba(22, 29, 24, .66);
+  border-color: rgba(225, 237, 221, .11);
+  box-shadow: 0 14px 42px rgba(0,0,0,.20), inset 0 1px 0 rgba(240,255,237,.07);
+  -webkit-backdrop-filter: blur(34px) saturate(160%);
+  backdrop-filter: blur(34px) saturate(160%);
+}
+:root[data-theme="dark"] .bridge,
+:root[data-theme="dark"] .icon-btn,
+:root[data-theme="dark"] .search {
+  background: rgba(16, 22, 18, .52);
+  border-color: rgba(222, 235, 218, .12);
+  color: #aab8a8;
+}
+:root[data-theme="dark"] .topbar-mark {
+  background: linear-gradient(145deg, #425443, #28382c);
+  color: #e0eddb;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 5px 16px rgba(0,0,0,.2);
+}
+
+:root[data-theme="dark"] .editorial-panel,
+:root[data-theme="dark"] .metric,
+:root[data-theme="dark"] .kpi-card,
+:root[data-theme="dark"] .agent-list-panel,
+:root[data-theme="dark"] .agent-detail,
+:root[data-theme="dark"] .control-map-panel,
+:root[data-theme="dark"] .control-detail,
+:root[data-theme="dark"] .workspace-files-panel,
+:root[data-theme="dark"] .workspace-editor-panel,
+:root[data-theme="dark"] .workspace-tasks-panel,
+:root[data-theme="dark"] .review-queue,
+:root[data-theme="dark"] .review-detail,
+:root[data-theme="dark"] .project-inspector,
+:root[data-theme="dark"] .settings-panel,
+:root[data-theme="dark"] .settings-nav {
+  background: linear-gradient(150deg, rgba(37, 45, 38, .76), rgba(25, 32, 27, .74));
+  border-color: rgba(225, 237, 221, .105);
+  box-shadow: 0 18px 46px rgba(0,0,0,.22), inset 0 1px 0 rgba(244,255,240,.055);
+  -webkit-backdrop-filter: blur(30px) saturate(145%);
+  backdrop-filter: blur(30px) saturate(145%);
+}
+:root[data-theme="dark"] .dashboard-kpis {
+  background: rgba(28, 35, 29, .72);
+  border-color: rgba(225,237,221,.11);
+  box-shadow: 0 18px 46px rgba(0,0,0,.22), inset 0 1px 0 rgba(244,255,240,.055);
+}
+:root[data-theme="dark"] .kpi-card { background: transparent; }
+:root[data-theme="dark"] .kpi-card + .kpi-card { border-color: rgba(225,237,221,.10); }
+:root[data-theme="dark"] .editorial-panel-head h2,
+:root[data-theme="dark"] .kpi-card > strong,
+:root[data-theme="dark"] .project-board-copy > b,
+:root[data-theme="dark"] .topology-master b,
+:root[data-theme="dark"] .topology-worker b,
+:root[data-theme="dark"] .activity-copy b { color: #e9f0e6; }
+:root[data-theme="dark"] .editorial-panel-head p,
+:root[data-theme="dark"] .project-board-copy > small,
+:root[data-theme="dark"] .activity-copy small { color: #a2afa0; }
+:root[data-theme="dark"] .sample-pill,
+:root[data-theme="dark"] .chart-period,
+:root[data-theme="dark"] .setup-state {
+  color: #b3c0ae;
+  background: rgba(14, 20, 16, .42);
+  border-color: rgba(225,237,221,.11);
+}
+:root[data-theme="dark"] .project-board-row { border-color: rgba(225,237,221,.085); }
+:root[data-theme="dark"] .project-board-row:hover { background: rgba(187,213,179,.055); }
+:root[data-theme="dark"] .topology-master,
+:root[data-theme="dark"] .topology-worker {
+  background: rgba(18, 25, 20, .66);
+  border-color: rgba(220,236,215,.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+}
+:root[data-theme="dark"] .topology-node-mark {
+  background: rgba(155,188,147,.16);
+  color: #c7ddbf;
+}
+:root[data-theme="dark"] .review-spotlight {
+  background: linear-gradient(135deg, rgba(62, 72, 57, .88), rgba(39, 49, 40, .82));
+  border-color: rgba(199,221,188,.17);
+  box-shadow: inset 0 1px 0 rgba(239,255,231,.08), 0 18px 45px rgba(0,0,0,.2);
+}
+:root[data-theme="dark"] .review-spotlight .section-kicker { color: #c2d1b7; }
+:root[data-theme="dark"] .review-spotlight-count,
+:root[data-theme="dark"] .review-spotlight h3 { color: #edf4e8; }
+:root[data-theme="dark"] .review-spotlight p { color: #bac7b2; }
+:root[data-theme="dark"] .review-spotlight button { color: #d0e0c6; }
+
+:root[data-theme="dark"] .project-row,
+:root[data-theme="dark"] .agent-card,
+:root[data-theme="dark"] .workflow-node,
+:root[data-theme="dark"] .workspace-file,
+:root[data-theme="dark"] .workspace-task,
+:root[data-theme="dark"] .project-card,
+:root[data-theme="dark"] .master-task-card,
+:root[data-theme="dark"] .review-item {
+  background: rgba(17, 24, 19, .48);
+  border-color: rgba(225,237,221,.095);
+}
+:root[data-theme="dark"] .project-row:hover,
+:root[data-theme="dark"] .agent-card:hover,
+:root[data-theme="dark"] .workflow-node:hover,
+:root[data-theme="dark"] .workspace-file:hover,
+:root[data-theme="dark"] .workspace-task:hover,
+:root[data-theme="dark"] .project-card:hover,
+:root[data-theme="dark"] .master-task-card:hover,
+:root[data-theme="dark"] .review-item:hover {
+  background: rgba(60, 77, 61, .46);
+  border-color: rgba(185, 213, 176, .23);
+  box-shadow: 0 12px 28px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.045);
+}
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] .master-console textarea,
+:root[data-theme="dark"] .master-path-input,
+:root[data-theme="dark"] .master-project-select {
+  color: #edf2eb;
+  background: rgba(13, 19, 15, .64);
+  border-color: rgba(222,235,218,.13);
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder { color: #788679; }
+:root[data-theme="dark"] button:focus-visible,
+:root[data-theme="dark"] a:focus-visible,
+:root[data-theme="dark"] input:focus-visible,
+:root[data-theme="dark"] textarea:focus-visible,
+:root[data-theme="dark"] select:focus-visible {
+  outline-color: #b9d0b0;
+  box-shadow: 0 0 0 4px rgba(164,194,158,.13);
+}
+:root[data-theme="dark"] .effects {
+  background: rgba(30, 39, 32, .76);
+  border-color: rgba(225,237,221,.13);
+  color: #b8c5b3;
+  box-shadow: 0 14px 38px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.07);
+  -webkit-backdrop-filter: blur(28px) saturate(155%);
+  backdrop-filter: blur(28px) saturate(155%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-theme="dark"] .nav-rail,
+  :root[data-theme="dark"] .nav-flyout,
+  :root[data-theme="dark"] .topbar,
+  :root[data-theme="dark"] .editorial-panel,
+  :root[data-theme="dark"] .metric,
+  :root[data-theme="dark"] .kpi-card,
+  :root[data-theme="dark"] .agent-list-panel,
+  :root[data-theme="dark"] .agent-detail,
+  :root[data-theme="dark"] .control-map-panel,
+  :root[data-theme="dark"] .control-detail,
+  :root[data-theme="dark"] .workspace-files-panel,
+  :root[data-theme="dark"] .workspace-editor-panel,
+  :root[data-theme="dark"] .workspace-tasks-panel,
+  :root[data-theme="dark"] .review-queue,
+  :root[data-theme="dark"] .review-detail,
+  :root[data-theme="dark"] .project-inspector,
+  :root[data-theme="dark"] .settings-panel,
+  :root[data-theme="dark"] .settings-nav {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #202920;
+  }
+}
